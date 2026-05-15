@@ -22,6 +22,6 @@ Closes #
 
 ## Checklist
 
-- [ ] Tests added or updated
+- [ ] Tests added or updated (optional)
 - [ ] Documentation updated (if applicable)
 - [ ] No breaking changes (or breaking changes are documented above)

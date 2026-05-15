@@ -60,13 +60,22 @@ jobs:
               }
             }
 
-            // All Checklist items must be checked
+            // Required Checklist items must be checked ("Tests added or updated" is optional)
             const checklistSection = body.match(/## Checklist\s*\n([\s\S]*?)(?=\n## |\s*$)/);
             if (checklistSection) {
-              const total = (checklistSection[1].match(/- \[[ x]\]/gi) ?? []).length;
-              const checked = (checklistSection[1].match(/- \[x\]/gi) ?? []).length;
-              if (total > 0 && checked < total) {
-                errors.push(`\`## Checklist\`: all items must be checked (${checked}/${total} checked).`);
+              const optionalTestPattern = /tests added or updated/i;
+              let required = 0;
+              let requiredChecked = 0;
+              for (const line of checklistSection[1].split('\n')) {
+                if (!/- \[[ x]\]/i.test(line)) continue;
+                if (optionalTestPattern.test(line)) continue;
+                required++;
+                if (/- \[x\]/i.test(line)) requiredChecked++;
+              }
+              if (required > 0 && requiredChecked < required) {
+                errors.push(
+                  `\`## Checklist\`: all required items must be checked (${requiredChecked}/${required} required checked). "Tests added or updated" is optional.`
+                );
               }
             }
 
