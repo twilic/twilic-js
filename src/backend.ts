@@ -36,7 +36,7 @@ export function requireBackend(): RuntimeBackend {
   }
 
   throw new Error(
-    "recurram is not initialized. Call await init() before encode/decode in browser runtimes.",
+    "twilic is not initialized. Call await init() before encode/decode in browser runtimes.",
   );
 }
 
@@ -97,7 +97,7 @@ function tryLoadDefaultBackendSync(): RuntimeBackend | null {
   const require = moduleApi.createRequire(import.meta.url);
   const platformKey = `${process.platform}-${process.arch}`;
   const modulePath = urlApi.fileURLToPath(
-    new URL(`../native/recurram_napi-${platformKey}.node`, import.meta.url),
+    new URL(`../native/twilic_napi-${platformKey}.node`, import.meta.url),
   );
   const native = require(modulePath) as NativeModule;
   return createNodeRuntimeBackend(native);

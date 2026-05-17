@@ -1,13 +1,13 @@
-# Recurram (JS)
+# Twilic (JS)
 
-JavaScript/TypeScript bindings for `recurram-rust` with two backends:
+JavaScript/TypeScript bindings for `twilic-rust` with two backends:
 
-- Node.js: N-API (`recurram-napi`)
-- Browser/JS runtime: WebAssembly (`recurram-wasm`)
+- Node.js: N-API (`twilic-napi`)
+- Browser/JS runtime: WebAssembly (`twilic-wasm`)
 
 Integers decode as `bigint` by default (i64/u64 safe handling).
 
-This release line targets the Recurram v2 wire format.
+This release line targets the Twilic v2 wire format.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ pnpm build
 
 Build steps:
 
-1. Build N-API addon (`native/recurram_napi.node`)
+1. Build N-API addon (`native/twilic_napi.node`)
 2. Build WASM package (`wasm/pkg/*`)
 3. Build TypeScript output (`dist/*`)
 
@@ -56,10 +56,10 @@ import {
   encode,
   decode,
   createSessionEncoder,
-  type RecurramValue,
-} from "recurram";
+  type TwilicValue,
+} from "twilic";
 
-const value: RecurramValue = {
+const value: TwilicValue = {
   id: 1001n,
   name: "alice",
   active: true,
@@ -85,7 +85,7 @@ import {
   encodeTransportJson,
   encodeWithSchema,
   toTransportJson,
-} from "recurram/advanced";
+} from "twilic/advanced";
 ```
 
 This entrypoint contains:
@@ -99,7 +99,7 @@ This entrypoint contains:
 ## Usage (Browser)
 
 ```ts
-import { init, encode, decode } from "recurram";
+import { init, encode, decode } from "twilic";
 
 await init({ prefer: "wasm" });
 
@@ -110,29 +110,29 @@ const value = decode(bytes);
 Browser/WASM still requires explicit async initialization. If you want to pass a custom WASM source, use `wasmInput`:
 
 ```ts
-await init({ prefer: "wasm", wasmInput: "/assets/recurram_wasm_bg.wasm" });
+await init({ prefer: "wasm", wasmInput: "/assets/twilic_wasm_bg.wasm" });
 ```
 
 ## TypeScript types
 
 Main exported types:
 
-- `RecurramValue`
+- `TwilicValue`
 - `Schema`, `SchemaField`
 - `SessionOptions`
 
-`RecurramValue` includes `bigint` and `Uint8Array` support:
+`TwilicValue` includes `bigint` and `Uint8Array` support:
 
 ```ts
-type RecurramValue =
+type TwilicValue =
   | null
   | boolean
   | number
   | bigint
   | string
   | Uint8Array
-  | RecurramValue[]
-  | { [key: string]: RecurramValue };
+  | TwilicValue[]
+  | { [key: string]: TwilicValue };
 ```
 
 ## Publish to npm
@@ -148,7 +148,7 @@ pnpm pack
 
 GitHub Actions publish uses [npm trusted publishing (OIDC)](https://docs.npmjs.com/trusted-publishers/)—no long-lived `NPM_TOKEN` secret.
 
-One-time setup on [npmjs.com](https://www.npmjs.com/): open the package → **Settings** → **Trusted Publisher** → **GitHub Actions**, then set **Organization or user** `recurram`, **Repository** `recurram-js`, and **Workflow filename** `publish-npm.yml` (exact name, including `.yml`). See also [GitHub Actions OIDC](https://docs.github.com/en/actions/concepts/security/openid-connect).
+One-time setup on [npmjs.com](https://www.npmjs.com/): open the package → **Settings** → **Trusted Publisher** → **GitHub Actions**, then set **Organization or user** `twilic`, **Repository** `twilic-js`, and **Workflow filename** `publish-npm.yml` (exact name, including `.yml`). See also [GitHub Actions OIDC](https://docs.github.com/en/actions/concepts/security/openid-connect).
 
 Release steps:
 

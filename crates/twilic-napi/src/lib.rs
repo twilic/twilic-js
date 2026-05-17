@@ -6,13 +6,13 @@ use napi::{
     KeyFilter, NapiRaw, NapiValue, TypedArrayType, ValueType,
 };
 use napi_derive::napi;
-use recurram_bridge::{
+use twilic_bridge::{
     decode_direct, decode_to_compact_json, decode_to_transport_json, encode_batch_compact_json,
     encode_batch_direct_from_json, encode_batch_native_raw, encode_batch_transport_json,
     encode_compact_json, encode_direct_from_json, encode_transport_json,
     encode_with_schema_transport_json, BridgeError, BridgeSessionEncoder, TransportValue,
 };
-use recurram_core::{
+use twilic_core::{
     decode as decode_value,
     wire::{decode_zigzag, encode_string, encode_varuint, encode_zigzag, Reader},
     Value,
@@ -515,7 +515,7 @@ fn write_smallest_u64(value: u64, out: &mut Vec<u8>) {
     }
 }
 
-fn read_smallest_u64(reader: &mut Reader<'_>) -> recurram_core::Result<u64> {
+fn read_smallest_u64(reader: &mut Reader<'_>) -> twilic_core::Result<u64> {
     match reader.read_u8()? {
         1 => Ok(reader.read_u8()? as u64),
         2 => {
@@ -533,7 +533,7 @@ fn read_smallest_u64(reader: &mut Reader<'_>) -> recurram_core::Result<u64> {
             bytes.copy_from_slice(reader.read_exact(8)?);
             Ok(u64::from_le_bytes(bytes))
         }
-        _ => Err(recurram_core::RecurramError::InvalidData(
+        _ => Err(twilic_core::TwilicError::InvalidData(
             "smallest-width integer size",
         )),
     }
@@ -742,7 +742,7 @@ fn write_native_bigint(
         return Ok(());
     }
 
-    Err(invalid_arg("bigint value is out of range for recurram"))
+    Err(invalid_arg("bigint value is out of range for twilic"))
 }
 
 fn value_to_js_unknown(env: &Env, value: Value) -> napi::Result<JsUnknown> {
@@ -1355,7 +1355,7 @@ pub fn encode_batch_direct_napi(values: serde_json::Value) -> napi::Result<Buffe
         .map_err(to_napi_error)
 }
 
-fn js_to_recurram_value(env: &Env, value: JsUnknown) -> napi::Result<Value> {
+fn js_to_twilic_value(env: &Env, value: JsUnknown) -> napi::Result<Value> {
     match value.get_type()? {
         ValueType::Null | ValueType::Undefined => Ok(Value::Null),
         ValueType::Boolean => {
@@ -1392,7 +1392,7 @@ fn js_to_recurram_value(env: &Env, value: JsUnknown) -> napi::Result<Value> {
             if signed_lossless {
                 return Ok(Value::I64(signed));
             }
-            Err(invalid_arg("bigint value is out of range for recurram"))
+            Err(invalid_arg("bigint value is out of range for twilic"))
         }
         ValueType::Object => {
             let object = unsafe { value.cast::<JsObject>() };
@@ -1402,7 +1402,7 @@ fn js_to_recurram_value(env: &Env, value: JsUnknown) -> napi::Result<Value> {
                 let mut arr = Vec::with_capacity(length);
                 for i in 0..length {
                     let item = get_element_raw(env, object_raw, i as u32)?;
-                    arr.push(js_to_recurram_value(env, item)?);
+                    arr.push(js_to_twilic_value(env, item)?);
                 }
                 return Ok(Value::Array(arr));
             }
@@ -1429,7 +1429,7 @@ fn js_to_recurram_value(env: &Env, value: JsUnknown) -> napi::Result<Value> {
                 let key_raw = unsafe { key.raw() };
                 let item = get_property_raw(env, object_raw, key_raw)?;
                 let key_str = with_raw_utf8(env, key_raw, |s| Ok(s.to_owned()))?;
-                let val = js_to_recurram_value(env, item)?;
+                let val = js_to_twilic_value(env, item)?;
                 map.push((key_str, val));
             }
             Ok(Value::Map(map))
@@ -1449,7 +1449,7 @@ pub fn encode_batch_native_raw_napi(env: Env, values: JsUnknown) -> napi::Result
     let mut rust_values = Vec::with_capacity(length);
     for i in 0..length {
         let item = get_element_raw(&env, object_raw, i as u32)?;
-        rust_values.push(js_to_recurram_value(&env, item)?);
+        rust_values.push(js_to_twilic_value(&env, item)?);
     }
     encode_batch_native_raw(rust_values)
         .map(Buffer::from)

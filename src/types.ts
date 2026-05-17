@@ -1,19 +1,19 @@
-export type RecurramValue =
+export type TwilicValue =
   | null
   | boolean
   | number
   | bigint
   | string
   | Uint8Array
-  | RecurramValue[]
-  | { [key: string]: RecurramValue };
+  | TwilicValue[]
+  | { [key: string]: TwilicValue };
 
 export interface SchemaField {
   number: number | bigint;
   name: string;
   logicalType: string;
   required: boolean;
-  defaultValue?: RecurramValue;
+  defaultValue?: TwilicValue;
   min?: number | bigint;
   max?: number | bigint;
   enumValues?: string[];

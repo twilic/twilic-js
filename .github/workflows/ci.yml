@@ -60,8 +60,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Checkout recurram-rust
-        run: git clone --depth 1 https://github.com/recurram/recurram-rust.git "${{ github.workspace }}/../recurram-rust"
+      - name: Checkout twilic-rust
+        run: git clone --depth 1 https://github.com/twilic/twilic-rust.git "${{ github.workspace }}/../twilic-rust"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -103,8 +103,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Checkout recurram-rust
-        run: git clone --depth 1 https://github.com/recurram/recurram-rust.git "${{ github.workspace }}/../recurram-rust"
+      - name: Checkout twilic-rust
+        run: git clone --depth 1 https://github.com/twilic/twilic-rust.git "${{ github.workspace }}/../twilic-rust"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -133,8 +133,8 @@ jobs:
 
       - name: Verify WASM artifacts
         run: |
-          test -f wasm/pkg/recurram_wasm.js
-          test -f wasm/pkg/recurram_wasm_bg.wasm
+          test -f wasm/pkg/twilic_wasm.js
+          test -f wasm/pkg/twilic_wasm_bg.wasm
 
       - name: Build TypeScript
         run: pnpm build:ts

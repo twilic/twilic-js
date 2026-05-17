@@ -185,8 +185,8 @@ function buildSizesTable(prBench, baseBench, prLabel, baseLabel) {
   );
   lines.push("| --- | ---: | ---: | ---: | ---: |");
   for (const name of names) {
-    const base = baseRows.get(name)?.recurram ?? null;
-    const pr = prRows.get(name)?.recurram ?? null;
+    const base = baseRows.get(name)?.twilic ?? null;
+    const pr = prRows.get(name)?.twilic ?? null;
     const delta = base !== null && pr !== null ? pr - base : null;
     const ratio = base && base > 0 && pr !== null ? (pr - base) / base : null;
     lines.push(
@@ -409,7 +409,7 @@ function main() {
 
   const sizesTable = buildSizesTable(prBench, baseBench, prLabel, baseLabel);
   if (sizesTable) {
-    lines.push("## Encoded payload size (recurram only)");
+    lines.push("## Encoded payload size (twilic only)");
     lines.push("");
     lines.push(sizesTable);
     lines.push("");

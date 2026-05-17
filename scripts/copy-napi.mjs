@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, "..");
 const targetDir = path.join(root, "native");
 const platformKey = `${process.platform}-${process.arch}`;
-const targetFile = path.join(targetDir, `recurram_napi-${platformKey}.node`);
+const targetFile = path.join(targetDir, `twilic_napi-${platformKey}.node`);
 
 const cargoTargetDir = process.env.CARGO_TARGET_DIR
   ? path.resolve(process.env.CARGO_TARGET_DIR)
@@ -19,13 +19,13 @@ await copyFile(sourceFile, targetFile);
 
 function resolveSourceBinary(releaseDir) {
   if (process.platform === "darwin") {
-    return path.join(releaseDir, "librecurram_napi.dylib");
+    return path.join(releaseDir, "libtwilic_napi.dylib");
   }
   if (process.platform === "linux") {
-    return path.join(releaseDir, "librecurram_napi.so");
+    return path.join(releaseDir, "libtwilic_napi.so");
   }
   if (process.platform === "win32") {
-    return path.join(releaseDir, "recurram_napi.dll");
+    return path.join(releaseDir, "twilic_napi.dll");
   }
   throw new Error(`unsupported platform: ${process.platform}`);
 }

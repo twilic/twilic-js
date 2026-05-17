@@ -1,5 +1,5 @@
 import { createDecodedMap, setDecodedMapEntry } from "./safe-map-key.js";
-import type { RecurramValue, Schema, SessionOptions } from "./types.js";
+import type { TwilicValue, Schema, SessionOptions } from "./types.js";
 
 export type TransportValue =
   | { t: "null" }
@@ -43,16 +43,16 @@ const MAX_U64 = (1n << 64n) - 1n;
 const MIN_I64 = -(1n << 63n);
 const MAX_I64 = (1n << 63n) - 1n;
 
-export function serializeValue(value: RecurramValue): string {
+export function serializeValue(value: TwilicValue): string {
   return JSON.stringify(toTransportValue(value));
 }
 
-export function deserializeValue(json: string): RecurramValue {
+export function deserializeValue(json: string): TwilicValue {
   const parsed = JSON.parse(json) as TransportValue;
   return fromTransportValue(parsed);
 }
 
-export function serializeValues(values: RecurramValue[]): string {
+export function serializeValues(values: TwilicValue[]): string {
   // oxlint-disable-next-line unicorn/no-new-array
   const out = new Array<TransportValue>(values.length);
   for (let index = 0; index < values.length; index += 1) {
@@ -121,7 +121,7 @@ export function serializeSessionOptions(options: SessionOptions = {}): string {
   return JSON.stringify(payload);
 }
 
-export function toTransportValue(value: RecurramValue): TransportValue {
+export function toTransportValue(value: TwilicValue): TransportValue {
   if (value === null) {
     return { t: "null" };
   }
@@ -182,14 +182,14 @@ export function toTransportValue(value: RecurramValue): TransportValue {
   }
 
   const entries: Array<[string, TransportValue]> = [];
-  const objectValue = value as Record<string, RecurramValue>;
+  const objectValue = value as Record<string, TwilicValue>;
   for (const key in objectValue) {
     entries.push([key, toTransportValue(objectValue[key])]);
   }
   return { t: "map", v: entries };
 }
 
-export function toTransportValues(values: RecurramValue[]): TransportValue[] {
+export function toTransportValues(values: TwilicValue[]): TransportValue[] {
   // oxlint-disable-next-line unicorn/no-new-array
   const out = new Array<TransportValue>(values.length);
   for (let index = 0; index < values.length; index += 1) {
@@ -198,7 +198,7 @@ export function toTransportValues(values: RecurramValue[]): TransportValue[] {
   return out;
 }
 
-export function fromTransportValue(value: TransportValue): RecurramValue {
+export function fromTransportValue(value: TransportValue): TwilicValue {
   switch (value.t) {
     case "null":
       return null;
@@ -217,7 +217,7 @@ export function fromTransportValue(value: TransportValue): RecurramValue {
     case "array": {
       const length = value.v.length;
       // oxlint-disable-next-line unicorn/no-new-array
-      const out = new Array<RecurramValue>(length);
+      const out = new Array<TwilicValue>(length);
       for (let index = 0; index < length; index += 1) {
         out[index] = fromTransportValue(value.v[index]);
       }
@@ -305,18 +305,18 @@ function fromBase64(encoded: string): Uint8Array {
 
 type CompactValue = readonly [number] | readonly [number, unknown];
 
-export function serializeCompact(value: RecurramValue): string {
+export function serializeCompact(value: TwilicValue): string {
   const out: string[] = [];
   appendCompactValue(value, out);
   return out.join("");
 }
 
-export function deserializeCompact(json: string): RecurramValue {
+export function deserializeCompact(json: string): TwilicValue {
   const parsed = JSON.parse(json) as CompactValue;
   return fromCompactValue(parsed);
 }
 
-export function serializeCompactBatch(values: RecurramValue[]): string {
+export function serializeCompactBatch(values: TwilicValue[]): string {
   const out: string[] = ["["];
   for (let index = 0; index < values.length; index += 1) {
     if (index > 0) {
@@ -328,7 +328,7 @@ export function serializeCompactBatch(values: RecurramValue[]): string {
   return out.join("");
 }
 
-function appendCompactValue(value: RecurramValue, out: string[]): void {
+function appendCompactValue(value: TwilicValue, out: string[]): void {
   if (value === null) {
     out.push("[0]");
     return;
@@ -399,7 +399,7 @@ function appendCompactValue(value: RecurramValue, out: string[]): void {
   }
 
   // Map: flat array [key1, val1, key2, val2, ...]
-  const objectValue = value as Record<string, RecurramValue>;
+  const objectValue = value as Record<string, TwilicValue>;
   const keys = Object.keys(objectValue);
   out.push("[8,[");
   for (let index = 0; index < keys.length; index += 1) {
@@ -456,7 +456,7 @@ function appendJsonString(value: string, out: string[]): void {
   out.push('"');
 }
 
-function fromCompactValue(cv: CompactValue): RecurramValue {
+function fromCompactValue(cv: CompactValue): TwilicValue {
   const tag = cv[0] as number;
   switch (tag) {
     case 0: // null
@@ -478,7 +478,7 @@ function fromCompactValue(cv: CompactValue): RecurramValue {
       const items = (cv as readonly [number, CompactValue[]])[1];
       const length = items.length;
       // oxlint-disable-next-line unicorn/no-new-array
-      const out = new Array<RecurramValue>(length);
+      const out = new Array<TwilicValue>(length);
       for (let index = 0; index < length; index += 1) {
         out[index] = fromCompactValue(items[index]);
       }

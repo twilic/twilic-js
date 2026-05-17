@@ -15,7 +15,7 @@ import {
 import type { TransportValue } from "./transport.js";
 import type {
   InitOptions,
-  RecurramValue,
+  TwilicValue,
   Schema,
   SessionOptions,
 } from "./types.js";
@@ -23,16 +23,16 @@ import type { RuntimeKind, RuntimeSessionEncoder } from "./runtime/types.js";
 
 export type {
   InitOptions,
-  RecurramValue,
+  TwilicValue,
   Schema,
   SchemaField,
   SessionOptions,
   UnknownReferencePolicy,
 } from "./types.js";
 
-type EncodeImpl = (value: RecurramValue) => Uint8Array;
-type DecodeImpl = (bytes: Uint8Array) => RecurramValue;
-type EncodeBatchImpl = (values: RecurramValue[]) => Uint8Array;
+type EncodeImpl = (value: TwilicValue) => Uint8Array;
+type DecodeImpl = (bytes: Uint8Array) => TwilicValue;
+type EncodeBatchImpl = (values: TwilicValue[]) => Uint8Array;
 
 let encodeImpl: EncodeImpl | null = null;
 let decodeImpl: DecodeImpl | null = null;
@@ -46,7 +46,7 @@ export async function init(options: InitOptions = {}): Promise<RuntimeKind> {
   return kind;
 }
 
-export function encode(value: RecurramValue): Uint8Array {
+export function encode(value: TwilicValue): Uint8Array {
   if (!encodeImpl) {
     requireBackend();
     encodeImpl = (input) => encodeFast(input);
@@ -54,7 +54,7 @@ export function encode(value: RecurramValue): Uint8Array {
   return encodeImpl(value);
 }
 
-export function encodeBatch(values: RecurramValue[]): Uint8Array {
+export function encodeBatch(values: TwilicValue[]): Uint8Array {
   if (!encodeBatchImpl) {
     requireBackend();
     encodeBatchImpl = (input) => encodeFast(input);
@@ -62,16 +62,16 @@ export function encodeBatch(values: RecurramValue[]): Uint8Array {
   return encodeBatchImpl(values);
 }
 
-export function decode(bytes: Uint8Array): RecurramValue {
+export function decode(bytes: Uint8Array): TwilicValue {
   if (!decodeImpl) {
     const backend = requireBackend();
     if (backend.decodeNative) {
-      decodeImpl = (input) => backend.decodeNative!(input) as RecurramValue;
+      decodeImpl = (input) => backend.decodeNative!(input) as TwilicValue;
     } else {
       decodeImpl = (input) => {
         const decoded = tryDecodeFast(input);
         if (decoded === undefined) {
-          throw new Error("recurram: failed to decode v2 payload");
+          throw new Error("twilic: failed to decode v2 payload");
         }
         return decoded;
       };
@@ -80,15 +80,15 @@ export function decode(bytes: Uint8Array): RecurramValue {
   return decodeImpl(bytes);
 }
 
-export function toTransportJson(value: RecurramValue): string {
+export function toTransportJson(value: TwilicValue): string {
   return serializeValue(value);
 }
 
-export function fromTransportJson(valueJson: string): RecurramValue {
+export function fromTransportJson(valueJson: string): TwilicValue {
   return deserializeValue(valueJson);
 }
 
-export function toTransportJsonBatch(values: RecurramValue[]): string {
+export function toTransportJsonBatch(values: TwilicValue[]): string {
   return serializeValues(values);
 }
 
@@ -106,7 +106,7 @@ export function encodeBatchTransportJson(valuesJson: string): Uint8Array {
 
 export function encodeWithSchema(
   schema: Schema,
-  value: RecurramValue,
+  value: TwilicValue,
 ): Uint8Array {
   return requireBackend().encodeWithSchemaTransportJson(
     serializeSchema(schema),
@@ -114,7 +114,7 @@ export function encodeWithSchema(
   );
 }
 
-export function encodeDirect(value: RecurramValue): Uint8Array {
+export function encodeDirect(value: TwilicValue): Uint8Array {
   return requireBackend().encodeDirect(
     toTransportValue(
       value,
@@ -122,12 +122,12 @@ export function encodeDirect(value: RecurramValue): Uint8Array {
   );
 }
 
-export function decodeDirect(bytes: Uint8Array): RecurramValue {
+export function decodeDirect(bytes: Uint8Array): TwilicValue {
   const transport = requireBackend().decodeDirect(bytes);
   return fromTransportValue(transport as unknown as TransportValue);
 }
 
-export function encodeBatchDirect(values: RecurramValue[]): Uint8Array {
+export function encodeBatchDirect(values: TwilicValue[]): Uint8Array {
   return requireBackend().encodeBatchDirect(
     toTransportValues(
       values,
@@ -135,11 +135,11 @@ export function encodeBatchDirect(values: RecurramValue[]): Uint8Array {
   );
 }
 
-export function toCompactJson(value: RecurramValue): string {
+export function toCompactJson(value: TwilicValue): string {
   return serializeCompact(value);
 }
 
-export function toCompactJsonBatch(values: RecurramValue[]): string {
+export function toCompactJsonBatch(values: TwilicValue[]): string {
   return serializeCompactBatch(values);
 }
 
@@ -155,11 +155,11 @@ export function encodeBatchCompactJson(json: string): Uint8Array {
   return requireBackend().encodeBatchCompactJson(json);
 }
 
-export function encodeCompact(value: RecurramValue): Uint8Array {
+export function encodeCompact(value: TwilicValue): Uint8Array {
   return requireBackend().encodeCompactJson(serializeCompact(value));
 }
 
-export function encodeBatchCompact(values: RecurramValue[]): Uint8Array {
+export function encodeBatchCompact(values: TwilicValue[]): Uint8Array {
   return requireBackend().encodeBatchCompactJson(serializeCompactBatch(values));
 }
 
@@ -179,7 +179,7 @@ export class AdvancedSessionEncoder {
     this.#inner = inner;
   }
 
-  encode(value: RecurramValue): Uint8Array {
+  encode(value: TwilicValue): Uint8Array {
     return this.#inner.encodeCompactJson(serializeCompact(value));
   }
 
@@ -187,14 +187,14 @@ export class AdvancedSessionEncoder {
     return this.#inner.encodeTransportJson(valueJson);
   }
 
-  encodeWithSchema(schema: Schema, value: RecurramValue): Uint8Array {
+  encodeWithSchema(schema: Schema, value: TwilicValue): Uint8Array {
     return this.#inner.encodeWithSchemaTransportJson(
       serializeSchema(schema),
       serializeValue(value),
     );
   }
 
-  encodeBatch(values: RecurramValue[]): Uint8Array {
+  encodeBatch(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeBatchCompactJson(serializeCompactBatch(values));
   }
 
@@ -202,7 +202,7 @@ export class AdvancedSessionEncoder {
     return this.#inner.encodeBatchTransportJson(valuesJson);
   }
 
-  encodePatch(value: RecurramValue): Uint8Array {
+  encodePatch(value: TwilicValue): Uint8Array {
     return this.#inner.encodePatchTransportJson(serializeValue(value));
   }
 
@@ -210,7 +210,7 @@ export class AdvancedSessionEncoder {
     return this.#inner.encodePatchTransportJson(valueJson);
   }
 
-  encodeMicroBatch(values: RecurramValue[]): Uint8Array {
+  encodeMicroBatch(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeMicroBatchCompactJson(
       serializeCompactBatch(values),
     );
@@ -220,7 +220,7 @@ export class AdvancedSessionEncoder {
     return this.#inner.encodeMicroBatchTransportJson(valuesJson);
   }
 
-  encodeDirect(value: RecurramValue): Uint8Array {
+  encodeDirect(value: TwilicValue): Uint8Array {
     return this.#inner.encodeDirect(
       toTransportValue(
         value,
@@ -228,7 +228,7 @@ export class AdvancedSessionEncoder {
     );
   }
 
-  encodeBatchDirect(values: RecurramValue[]): Uint8Array {
+  encodeBatchDirect(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeBatchDirect(
       toTransportValues(
         values,
@@ -236,7 +236,7 @@ export class AdvancedSessionEncoder {
     );
   }
 
-  encodePatchDirect(value: RecurramValue): Uint8Array {
+  encodePatchDirect(value: TwilicValue): Uint8Array {
     return this.#inner.encodePatchDirect(
       toTransportValue(
         value,
@@ -244,7 +244,7 @@ export class AdvancedSessionEncoder {
     );
   }
 
-  encodeMicroBatchDirect(values: RecurramValue[]): Uint8Array {
+  encodeMicroBatchDirect(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeMicroBatchDirect(
       toTransportValues(
         values,
@@ -252,7 +252,7 @@ export class AdvancedSessionEncoder {
     );
   }
 
-  encodeCompact(value: RecurramValue): Uint8Array {
+  encodeCompact(value: TwilicValue): Uint8Array {
     return this.#inner.encodeCompactJson(serializeCompact(value));
   }
 
@@ -260,7 +260,7 @@ export class AdvancedSessionEncoder {
     return this.#inner.encodeCompactJson(json);
   }
 
-  encodeBatchCompact(values: RecurramValue[]): Uint8Array {
+  encodeBatchCompact(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeBatchCompactJson(serializeCompactBatch(values));
   }
 
@@ -268,7 +268,7 @@ export class AdvancedSessionEncoder {
     return this.#inner.encodeBatchCompactJson(json);
   }
 
-  encodePatchCompact(value: RecurramValue): Uint8Array {
+  encodePatchCompact(value: TwilicValue): Uint8Array {
     return this.#inner.encodePatchCompactJson(serializeCompact(value));
   }
 
@@ -276,7 +276,7 @@ export class AdvancedSessionEncoder {
     return this.#inner.encodePatchCompactJson(json);
   }
 
-  encodeMicroBatchCompact(values: RecurramValue[]): Uint8Array {
+  encodeMicroBatchCompact(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeMicroBatchCompactJson(
       serializeCompactBatch(values),
     );

@@ -1,17 +1,17 @@
 # Contributing
 
-Thank you for improving the Recurram JavaScript/TypeScript bindings.
+Thank you for improving the Twilic JavaScript/TypeScript bindings.
 
 ## Scope
 
 This repository contains:
 
 - TypeScript API (`src/`)
-- N-API native addon (`crates/recurram-napi`, `native/`)
-- WebAssembly build (`crates/recurram-wasm`, `wasm/`)
+- N-API native addon (`crates/twilic-napi`, `native/`)
+- WebAssembly build (`crates/twilic-wasm`, `wasm/`)
 - Node and integration tests (`tests/`)
 
-Keep changes aligned with the normative spec in [recurram/recurram](https://github.com/recurram/recurram).
+Keep changes aligned with the normative spec in [twilic/twilic](https://github.com/twilic/twilic).
 
 ## Development
 

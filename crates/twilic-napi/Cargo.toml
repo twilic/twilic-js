@@ -1,5 +1,5 @@
 [package]
-name = "recurram-napi"
+name = "twilic-napi"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,8 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-recurram-bridge = { path = "../recurram-bridge" }
-recurram-core = { package = "recurram", path = "../../../recurram-rust" }
+twilic-bridge = { path = "../twilic-bridge" }
+twilic-core = { package = "twilic", path = "../../../twilic-rust" }
 napi = { version = "2.16", default-features = false, features = [
   "napi8",
   "serde-json",

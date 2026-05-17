@@ -1,5 +1,5 @@
 import { createDecodedMap, setDecodedMapEntry } from "./safe-map-key.js";
-import type { RecurramValue } from "./types.js";
+import type { TwilicValue } from "./types.js";
 
 const TAG_NULL = 0xc0;
 const TAG_BOOL_FALSE = 0xc1;
@@ -34,7 +34,7 @@ const MAX_I64 = (1n << 63n) - 1n;
 const ENCODE_CACHE_LIMIT = 4096;
 const DECODE_FAIL = Symbol("decode_fail");
 
-type DecodeValue = RecurramValue | typeof DECODE_FAIL;
+type DecodeValue = TwilicValue | typeof DECODE_FAIL;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -73,7 +73,7 @@ const _encodeState: EncodeState = {
   nextShapeId: 0,
 };
 
-export function encodeFast(value: RecurramValue): Uint8Array {
+export function encodeFast(value: TwilicValue): Uint8Array {
   _encodeWriter.reset(256);
   _encodeKeyIds.clear();
   _encodeStringIds.clear();
@@ -85,7 +85,7 @@ export function encodeFast(value: RecurramValue): Uint8Array {
   return _encodeWriter.finish();
 }
 
-export function tryDecodeFast(bytes: Uint8Array): RecurramValue | undefined {
+export function tryDecodeFast(bytes: Uint8Array): TwilicValue | undefined {
   sharedKeys.length = 0;
   sharedStrings.length = 0;
   sharedShapes.length = 0;
@@ -500,7 +500,7 @@ interface EncodeState {
 }
 
 function writeValue(
-  value: RecurramValue,
+  value: TwilicValue,
   writer: ByteWriter,
   state: EncodeState,
 ): void {
@@ -629,7 +629,7 @@ function writeValue(
         writeKey(shape[i], writer, state);
       }
       for (let i = 0; i < value.length; i += 1) {
-        const row = value[i] as Record<string, RecurramValue>;
+        const row = value[i] as Record<string, TwilicValue>;
         for (let j = 0; j < shape.length; j += 1) {
           writeValue(row[shape[j]], writer, state);
         }
@@ -661,7 +661,7 @@ function decodeFixMapInline(
   reader: ByteReader,
   state: DecodeState,
   count: number,
-): { [key: string]: RecurramValue } | typeof DECODE_FAIL {
+): { [key: string]: TwilicValue } | typeof DECODE_FAIL {
   const out = createDecodedMap();
 
   for (let i = 0; i < count; i += 1) {
@@ -792,9 +792,9 @@ function readArrayValue(
   reader: ByteReader,
   state: DecodeState,
   length: number,
-): RecurramValue[] | typeof DECODE_FAIL {
+): TwilicValue[] | typeof DECODE_FAIL {
   // oxlint-disable-next-line unicorn/no-new-array
-  const out = new Array<RecurramValue>(length);
+  const out = new Array<TwilicValue>(length);
   if (length === 0) {
     return out;
   }
@@ -850,7 +850,7 @@ function readMapValue(
   reader: ByteReader,
   state: DecodeState,
   length: number,
-): { [key: string]: RecurramValue } | typeof DECODE_FAIL {
+): { [key: string]: TwilicValue } | typeof DECODE_FAIL {
   const out = createDecodedMap();
   for (let index = 0; index < length; index += 1) {
     const key = readKey(reader, state);
@@ -1211,8 +1211,8 @@ function decodeShortAscii(
 }
 
 function isPlainMap(
-  value: RecurramValue,
-): value is { [key: string]: RecurramValue } {
+  value: TwilicValue,
+): value is { [key: string]: TwilicValue } {
   if (typeof value !== "object" || value === null) {
     return false;
   }
@@ -1405,7 +1405,7 @@ function pushDecodedString(state: DecodeState, value: string): void {
   state.strings.push(value);
 }
 
-function detectShape(values: RecurramValue[]): string[] | null {
+function detectShape(values: TwilicValue[]): string[] | null {
   if (values.length < 2) {
     return null;
   }

@@ -1,8 +1,8 @@
 [workspace]
 members = [
-  "crates/recurram-bridge",
-  "crates/recurram-napi",
-  "crates/recurram-wasm",
+  "crates/twilic-bridge",
+  "crates/twilic-napi",
+  "crates/twilic-wasm",
 ]
 resolver = "2"
 

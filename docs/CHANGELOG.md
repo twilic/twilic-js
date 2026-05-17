@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed the project from Recurram to Twilic. Historical changelog entries still refer to Recurram and gowe where applicable.
+
 ### Added
 
 - GitHub issue templates (feature request and bug report) and pull request template.
@@ -23,11 +27,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `ByteWriter` is now pooled at module level with a `reset()` + `finish()` (copy) API, eliminating per-call allocation and repeated buffer growth.
 - `EncodeState` Maps (`keyIds`, `stringIds`, `shapeIds`) are now pooled at module level and cleared per call instead of being recreated on every `encodeFast` invocation.
 - N-API backend `decode_native_napi` now skips the compact-protocol attempt for v2 bytes (first byte > `0x02`), avoiding wasted parsing work.
-- `recurram-bridge` and `recurram-napi` Cargo dependencies now reference the local `recurram-rust` crate via a workspace-relative path instead of the published `recurram = "0.1.0"`, ensuring the v2 codec is used throughout.
+- `recurram-bridge` and `recurram-napi` Cargo dependencies now reference the local `twilic-rust` crate via a workspace-relative path instead of the published `recurram = "0.1.0"`, ensuring the v2 codec is used throughout.
 
 ### Fixed
 
-- CI workflow (`ci.yml`): added a `git clone` step to check out `recurram-rust` alongside `recurram-js` before the Rust build, fixing the `failed to read recurram-rust/Cargo.toml` error that caused all CI jobs to fail.
+- CI workflow (`ci.yml`): added a `git clone` step to check out `twilic-rust` alongside `twilic-js` before the Rust build, fixing the `failed to read twilic-rust/Cargo.toml` error that caused all CI jobs to fail.
 - `encodeBatchNativeRaw` no longer panics when the JS array contains `BigInt` values; the function now uses `JsUnknown` with raw NAPI traversal instead of `serde_json::Value`.
 
 ## [2.0.0] - 2026-05-01
@@ -66,5 +70,5 @@ Initial public release of the JavaScript and TypeScript bindings for Recurram.
 
 - Corrected the Rust crate path used by the workspace so native builds resolve the bridge crate correctly.
 
-[unreleased]: https://github.com/recurram/recurram-js/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/recurram/recurram-js/releases/tag/v0.1.0
+[unreleased]: https://github.com/twilic/twilic-js/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/twilic/twilic-js/releases/tag/v0.1.0

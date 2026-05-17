@@ -47,7 +47,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         with:
           script: |
-            const HEADER = "<!-- recurram-invisible-chars -->";
+            const HEADER = "<!-- twilic-invisible-chars -->";
             const MAX_ROWS = 200;
 
             const INVISIBLE_RANGES = [

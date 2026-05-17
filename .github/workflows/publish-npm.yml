@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.platform }}-${{ matrix.arch }}
-          path: native/recurram_napi-${{ matrix.platform }}-${{ matrix.arch }}.node
+          path: native/twilic_napi-${{ matrix.platform }}-${{ matrix.arch }}.node
 
   publish:
     name: Publish to npm
@@ -113,7 +113,7 @@ jobs:
 
       # Trusted publishing (OIDC): requires npm CLI >= 11.5.1 (see npm trusted-publishers docs).
       # Configure the package on npmjs.com: Settings → Trusted Publisher → GitHub Actions
-      # (repository recurram/recurram-js, workflow file publish-npm.yml).
+      # (repository twilic/twilic-js, workflow file publish-npm.yml).
       - name: Ensure npm CLI for OIDC trusted publishing
         run: npm install -g "npm@^11.5.1"
 

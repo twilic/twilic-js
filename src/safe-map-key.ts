@@ -1,4 +1,4 @@
-import type { RecurramValue } from "./types.js";
+import type { TwilicValue } from "./types.js";
 
 export function isSafeMapKey(key: string): boolean {
   const length = key.length;
@@ -11,14 +11,14 @@ export function isSafeMapKey(key: string): boolean {
   return true;
 }
 
-export function createDecodedMap(): Record<string, RecurramValue> {
+export function createDecodedMap(): Record<string, TwilicValue> {
   return {};
 }
 
 export function setDecodedMapEntry(
-  out: Record<string, RecurramValue>,
+  out: Record<string, TwilicValue>,
   key: string,
-  value: RecurramValue,
+  value: TwilicValue,
 ): void {
   if (isSafeMapKey(key)) {
     out[key] = value;

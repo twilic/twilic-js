@@ -6,20 +6,20 @@ import {
   serializeSessionOptions,
   serializeValue,
 } from "./transport.js";
-import type { InitOptions, RecurramValue, SessionOptions } from "./types.js";
+import type { InitOptions, TwilicValue, SessionOptions } from "./types.js";
 import type { RuntimeKind, RuntimeSessionEncoder } from "./runtime/types.js";
 
 export type {
   InitOptions,
-  RecurramValue,
+  TwilicValue,
   Schema,
   SchemaField,
   SessionOptions,
   UnknownReferencePolicy,
 } from "./types.js";
 
-type EncodeImpl = (value: RecurramValue) => Uint8Array;
-type DecodeImpl = (bytes: Uint8Array) => RecurramValue;
+type EncodeImpl = (value: TwilicValue) => Uint8Array;
+type DecodeImpl = (bytes: Uint8Array) => TwilicValue;
 
 let encodeImpl: EncodeImpl | null = null;
 let decodeImpl: DecodeImpl | null = null;
@@ -31,7 +31,7 @@ export async function init(options: InitOptions = {}): Promise<RuntimeKind> {
   return kind;
 }
 
-export function encode(value: RecurramValue): Uint8Array {
+export function encode(value: TwilicValue): Uint8Array {
   if (!encodeImpl) {
     requireBackend();
     encodeImpl = (input) => encodeFast(input);
@@ -39,16 +39,16 @@ export function encode(value: RecurramValue): Uint8Array {
   return encodeImpl(value);
 }
 
-export function decode(bytes: Uint8Array): RecurramValue {
+export function decode(bytes: Uint8Array): TwilicValue {
   if (!decodeImpl) {
     const backend = requireBackend();
     if (backend.decodeNative) {
-      decodeImpl = (input) => backend.decodeNative!(input) as RecurramValue;
+      decodeImpl = (input) => backend.decodeNative!(input) as TwilicValue;
     } else {
       decodeImpl = (input) => {
         const decoded = tryDecodeFast(input);
         if (decoded === undefined) {
-          throw new Error("recurram: failed to decode v2 payload");
+          throw new Error("twilic: failed to decode v2 payload");
         }
         return decoded;
       };
@@ -73,19 +73,19 @@ export class SessionEncoder {
     this.#inner = inner;
   }
 
-  encode(value: RecurramValue): Uint8Array {
+  encode(value: TwilicValue): Uint8Array {
     return this.#inner.encodeCompactJson(serializeCompact(value));
   }
 
-  encodeBatch(values: RecurramValue[]): Uint8Array {
+  encodeBatch(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeBatchCompactJson(serializeCompactBatch(values));
   }
 
-  encodePatch(value: RecurramValue): Uint8Array {
+  encodePatch(value: TwilicValue): Uint8Array {
     return this.#inner.encodePatchTransportJson(serializeValue(value));
   }
 
-  encodeMicroBatch(values: RecurramValue[]): Uint8Array {
+  encodeMicroBatch(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeMicroBatchCompactJson(
       serializeCompactBatch(values),
     );

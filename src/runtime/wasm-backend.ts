@@ -31,7 +31,7 @@ interface WasmModule {
 export async function loadWasmBackend(
   wasmInput?: unknown,
 ): Promise<RuntimeBackend> {
-  const moduleUrl = new URL("../../wasm/pkg/recurram_wasm.js", import.meta.url);
+  const moduleUrl = new URL("../../wasm/pkg/twilic_wasm.js", import.meta.url);
   const wasm = (await import(moduleUrl.href)) as WasmModule;
   // bundler target auto-initializes via static WASM import; web/deno targets
   // expose an explicit async default init function that must be called.

@@ -1,5 +1,5 @@
 [package]
-name = "recurram-wasm"
+name = "twilic-wasm"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,6 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-recurram-bridge = { path = "../recurram-bridge" }
+twilic-bridge = { path = "../twilic-bridge" }
 wasm-bindgen = "0.2"
 getrandom = { version = "0.3", features = ["wasm_js"] }

@@ -27,30 +27,30 @@ jobs:
       PR_TOOLS_DIR: ${{ github.workspace }}/pr-tools
 
     steps:
-      - name: Checkout recurram-js (PR head)
+      - name: Checkout twilic-js (PR head)
         uses: actions/checkout@v4
         with:
-          path: workspace/recurram-js
+          path: workspace/twilic-js
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Checkout recurram-rust
+      - name: Checkout twilic-rust
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/recurram-rust
-          path: workspace/recurram-rust
+          repository: ${{ github.repository_owner }}/twilic-rust
+          path: workspace/twilic-rust
 
-      - name: Checkout recurram-bench
+      - name: Checkout twilic-bench
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/recurram-bench
-          path: workspace/recurram-bench
+          repository: ${{ github.repository_owner }}/twilic-bench
+          path: workspace/twilic-bench
 
       - name: Stash report tooling from PR head
         run: |
           mkdir -p "$PR_TOOLS_DIR" "$REPORTS_DIR"
-          cp workspace/recurram-js/scripts/measure-bundle.mjs "$PR_TOOLS_DIR/"
-          cp workspace/recurram-js/scripts/build-pr-report.mjs "$PR_TOOLS_DIR/"
+          cp workspace/twilic-js/scripts/measure-bundle.mjs "$PR_TOOLS_DIR/"
+          cp workspace/twilic-js/scripts/build-pr-report.mjs "$PR_TOOLS_DIR/"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -63,8 +63,8 @@ jobs:
           node-version: 24
           cache: pnpm
           cache-dependency-path: |
-            workspace/recurram-js/pnpm-lock.yaml
-            workspace/recurram-bench/pnpm-lock.yaml
+            workspace/twilic-js/pnpm-lock.yaml
+            workspace/twilic-bench/pnpm-lock.yaml
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -72,7 +72,7 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: workspace/recurram-js -> workspace/recurram-js/target
+          workspaces: workspace/twilic-js -> workspace/twilic-js/target
 
       - name: Setup wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -81,7 +81,7 @@ jobs:
 
       - name: Resolve commit metadata
         id: shas
-        working-directory: workspace/recurram-js
+        working-directory: workspace/twilic-js
         run: |
           set -euo pipefail
           head_sha="${{ github.event.pull_request.head.sha }}"
@@ -100,7 +100,7 @@ jobs:
 
       - name: Build PR head
         id: build_pr
-        working-directory: workspace/recurram-js
+        working-directory: workspace/twilic-js
         continue-on-error: true
         run: |
           pnpm install --frozen-lockfile
@@ -110,18 +110,18 @@ jobs:
         if: steps.build_pr.outcome == 'success'
         run: |
           node "$PR_TOOLS_DIR/measure-bundle.mjs" \
-            --cwd workspace/recurram-js \
+            --cwd workspace/twilic-js \
             --out "$REPORTS_DIR/pr-bundle.json"
 
       - name: Install bench dependencies (PR)
         if: steps.build_pr.outcome == 'success'
-        working-directory: workspace/recurram-bench
+        working-directory: workspace/twilic-bench
         run: pnpm install --frozen-lockfile
 
       - name: Run benchmark (PR)
         id: bench_pr
         if: steps.build_pr.outcome == 'success'
-        working-directory: workspace/recurram-bench
+        working-directory: workspace/twilic-bench
         continue-on-error: true
         run: |
           pnpm exec tsx src/benchmark.ts \
@@ -131,9 +131,9 @@ jobs:
             --warmup-ms "$BENCH_WARMUP_MS" \
             --json-out "$REPORTS_DIR/pr-bench.json"
 
-      - name: Switch recurram-js to base
+      - name: Switch twilic-js to base
         id: switch_base
-        working-directory: workspace/recurram-js
+        working-directory: workspace/twilic-js
         run: |
           set -euo pipefail
           git clean -ffdx
@@ -141,7 +141,7 @@ jobs:
 
       - name: Build base
         id: build_base
-        working-directory: workspace/recurram-js
+        working-directory: workspace/twilic-js
         continue-on-error: true
         run: |
           pnpm install --frozen-lockfile
@@ -151,18 +151,18 @@ jobs:
         if: steps.build_base.outcome == 'success'
         run: |
           node "$PR_TOOLS_DIR/measure-bundle.mjs" \
-            --cwd workspace/recurram-js \
+            --cwd workspace/twilic-js \
             --out "$REPORTS_DIR/base-bundle.json"
 
       - name: Install bench dependencies (base)
         if: steps.build_base.outcome == 'success'
-        working-directory: workspace/recurram-bench
+        working-directory: workspace/twilic-bench
         run: pnpm install --frozen-lockfile
 
       - name: Run benchmark (base)
         id: bench_base
         if: steps.build_base.outcome == 'success'
-        working-directory: workspace/recurram-bench
+        working-directory: workspace/twilic-bench
         continue-on-error: true
         run: |
           pnpm exec tsx src/benchmark.ts \
@@ -220,5 +220,5 @@ jobs:
         if: always() && github.event.pull_request.head.repo.full_name == github.repository
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: recurram-pr-bench-bundle
+          header: twilic-pr-bench-bundle
           path: reports/comment.md

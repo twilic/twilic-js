@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Measure publishable artifact sizes for recurram-js and emit a JSON report.
+// Measure publishable artifact sizes for twilic-js and emit a JSON report.
 //
 // Usage:
 //   node scripts/measure-bundle.mjs [--out PATH] [--cwd DIR]
