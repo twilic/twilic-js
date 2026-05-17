@@ -53,6 +53,7 @@ export function deserializeValue(json: string): RecurramValue {
 }
 
 export function serializeValues(values: RecurramValue[]): string {
+  // oxlint-disable-next-line unicorn/no-new-array
   const out = new Array<TransportValue>(values.length);
   for (let index = 0; index < values.length; index += 1) {
     out[index] = toTransportValue(values[index]);
@@ -61,6 +62,7 @@ export function serializeValues(values: RecurramValue[]): string {
 }
 
 export function serializeSchema(schema: Schema): string {
+  // oxlint-disable-next-line unicorn/no-new-array
   const fields = new Array<TransportSchemaField>(schema.fields.length);
   for (let index = 0; index < schema.fields.length; index += 1) {
     const field = schema.fields[index];
@@ -162,6 +164,7 @@ export function toTransportValue(value: RecurramValue): TransportValue {
   }
   if (Array.isArray(value)) {
     const length = value.length;
+    // oxlint-disable-next-line unicorn/no-new-array
     const out = new Array<TransportValue>(length);
     for (let index = 0; index < length; index += 1) {
       out[index] = toTransportValue(value[index]);
@@ -187,6 +190,7 @@ export function toTransportValue(value: RecurramValue): TransportValue {
 }
 
 export function toTransportValues(values: RecurramValue[]): TransportValue[] {
+  // oxlint-disable-next-line unicorn/no-new-array
   const out = new Array<TransportValue>(values.length);
   for (let index = 0; index < values.length; index += 1) {
     out[index] = toTransportValue(values[index]);
@@ -212,6 +216,7 @@ export function fromTransportValue(value: TransportValue): RecurramValue {
       return fromBase64(value.v);
     case "array": {
       const length = value.v.length;
+      // oxlint-disable-next-line unicorn/no-new-array
       const out = new Array<RecurramValue>(length);
       for (let index = 0; index < length; index += 1) {
         out[index] = fromTransportValue(value.v[index]);
@@ -472,6 +477,7 @@ function fromCompactValue(cv: CompactValue): RecurramValue {
       // array
       const items = (cv as readonly [number, CompactValue[]])[1];
       const length = items.length;
+      // oxlint-disable-next-line unicorn/no-new-array
       const out = new Array<RecurramValue>(length);
       for (let index = 0; index < length; index += 1) {
         out[index] = fromCompactValue(items[index]);
