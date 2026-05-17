@@ -52,12 +52,7 @@ What it validates:
 ## Usage (Node)
 
 ```ts
-import {
-  encode,
-  decode,
-  createSessionEncoder,
-  type TwilicValue,
-} from "twilic";
+import { encode, decode, createSessionEncoder, type TwilicValue } from "twilic";
 
 const value: TwilicValue = {
   id: 1001n,

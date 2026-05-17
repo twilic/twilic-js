@@ -1,9 +1,5 @@
 [workspace]
-members = [
-  "crates/twilic-bridge",
-  "crates/twilic-napi",
-  "crates/twilic-wasm",
-]
+members = ["crates/twilic-bridge", "crates/twilic-napi", "crates/twilic-wasm"]
 resolver = "2"
 
 [profile.release]
