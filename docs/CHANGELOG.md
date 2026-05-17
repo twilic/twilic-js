@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-05-17
+
 ### Changed
 
 - Renamed the npm package from `twilic` to `@twilic/core`.
@@ -78,5 +80,7 @@ Initial public release of the JavaScript and TypeScript bindings for Recurram.
 
 - Corrected the Rust crate path used by the workspace so native builds resolve the bridge crate correctly.
 
-[unreleased]: https://github.com/twilic/twilic-js/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/twilic/twilic-js/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/twilic/twilic-js/compare/v2.0.0...v3.0.0
+[2.0.0]: https://github.com/twilic/twilic-js/compare/v0.1.0...v2.0.0
 [0.1.0]: https://github.com/twilic/twilic-js/releases/tag/v0.1.0
