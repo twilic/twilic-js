@@ -50,6 +50,10 @@ fn to_napi_error(error: BridgeError) -> napi::Error {
     napi::Error::from_reason(error.to_string())
 }
 
+fn is_safe_map_key(name: &str) -> bool {
+    name != "__proto__" && name != "constructor" && name != "prototype"
+}
+
 fn invalid_arg(message: &str) -> napi::Error {
     napi::Error::new(napi::Status::InvalidArg, message.to_owned())
 }
@@ -136,6 +140,9 @@ fn set_named_property_cached(
     name: &str,
     value: JsUnknown,
 ) -> napi::Result<()> {
+    if !is_safe_map_key(name) {
+        return Ok(());
+    }
     with_cached_property_name(name, |cstring| {
         napi::check_status!(
             unsafe {
@@ -155,6 +162,9 @@ fn set_named_property_fast(
     name: &str,
     value: sys::napi_value,
 ) -> napi::Result<()> {
+    if !is_safe_map_key(name) {
+        return Ok(());
+    }
     let bytes = name.as_bytes();
     if bytes.len() < 64 && !bytes.contains(&0) {
         let mut buf = [0u8; 64];
@@ -469,6 +479,23 @@ fn with_raw_utf8<T>(
     )?;
     let string = std::str::from_utf8(&buf[..written]).map_err(|_| invalid_arg("invalid utf-8"))?;
     f(string)
+}
+
+fn set_map_property_raw(
+    env: &Env,
+    object: sys::napi_value,
+    key: sys::napi_value,
+    value: sys::napi_value,
+) -> napi::Result<()> {
+    with_raw_utf8(env, key, |name| {
+        if is_safe_map_key(name) {
+            napi::check_status!(
+                unsafe { sys::napi_set_property(env.raw(), object, key, value) },
+                "set_map_property_raw error"
+            )?;
+        }
+        Ok(())
+    })
 }
 
 fn read_length_prefixed_slice<'a>(reader: &mut Reader<'a>) -> napi::Result<&'a [u8]> {
@@ -1124,10 +1151,7 @@ fn decode_v2_array_raw(
             let obj_raw = unsafe { obj.raw() };
             for &key in &shape_keys {
                 let val = decode_v2_value_raw(env, reader, state)?;
-                napi::check_status!(
-                    unsafe { sys::napi_set_property(env.raw(), obj_raw, key, val) },
-                    "v2 shape set_property error"
-                )?;
+                set_map_property_raw(env, obj_raw, key, val)?;
             }
             napi::check_status!(
                 unsafe { sys::napi_set_element(env.raw(), array_raw, i as u32, obj_raw) },
@@ -1163,10 +1187,7 @@ fn decode_v2_map_raw(
     for _ in 0..len {
         let key = decode_v2_key_raw(env, reader, state)?;
         let val = decode_v2_value_raw(env, reader, state)?;
-        napi::check_status!(
-            unsafe { sys::napi_set_property(env.raw(), obj_raw, key, val) },
-            "v2 map set_property error"
-        )?;
+        set_map_property_raw(env, obj_raw, key, val)?;
     }
     Ok(obj_raw)
 }
