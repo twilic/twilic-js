@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - CI: pinned `wasm-pack` to v0.13.0 so the `--no-opt` flag used by `pnpm build:wasm` remains accepted.
 - CI: benchmark checkout uses the `benchmark` repository instead of `twilic-bench`.
 - `encodeBatchNativeRaw` no longer panics when the JS array contains `BigInt` values; the function now uses `JsUnknown` with raw NAPI traversal instead of `serde_json::Value`.
+- `publish-npm.yml`: clone `twilic-rust` before N-API and WASM builds so release workflows resolve the path dependency on the Rust crate.
 
 ## [2.0.0] - 2026-05-01
 
