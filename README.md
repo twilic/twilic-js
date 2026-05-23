@@ -107,7 +107,7 @@ const bytes = encode({ id: 1n, role: "admin" });
 const value = decode(bytes);
 ```
 
-Browser/WASM still requires explicit async initialization. If you want to pass a custom WASM source, use `wasmInput`:
+Browser/WASM still requires explicit async initialization. If you want to pass a custom WASM source, use `wasmInput` with a value from your own asset pipeline (not from user-controlled input such as URL parameters):
 
 ```ts
 await init({ prefer: "wasm", wasmInput: "/assets/twilic_wasm_bg.wasm" });
@@ -118,6 +118,7 @@ await init({ prefer: "wasm", wasmInput: "/assets/twilic_wasm_bg.wasm" });
 Main exported types:
 
 - `TwilicValue`
+- `WasmInput`, `InitOptions`
 - `Schema`, `SchemaField`
 - `SessionOptions`
 

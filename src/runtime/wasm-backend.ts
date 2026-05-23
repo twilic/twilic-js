@@ -1,3 +1,4 @@
+import type { WasmInput } from "../types.js";
 import type {
   RuntimeBackend,
   RuntimeSessionEncoder,
@@ -17,7 +18,7 @@ interface WasmSessionEncoder {
 }
 
 interface WasmModule {
-  default: (input?: unknown) => Promise<unknown>;
+  default: (input?: WasmInput) => Promise<unknown>;
   encodeTransportJson(valueJson: string): Uint8Array;
   decodeToTransportJson(bytes: Uint8Array): string;
   encodeWithSchemaTransportJson(
@@ -29,7 +30,7 @@ interface WasmModule {
 }
 
 export async function loadWasmBackend(
-  wasmInput?: unknown,
+  wasmInput?: WasmInput,
 ): Promise<RuntimeBackend> {
   const moduleUrl = new URL("../../wasm/pkg/twilic_wasm.js", import.meta.url);
   const wasm = (await import(moduleUrl.href)) as WasmModule;

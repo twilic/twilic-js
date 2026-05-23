@@ -35,7 +35,17 @@ export interface SessionOptions {
   unknownReferencePolicy?: UnknownReferencePolicy;
 }
 
+/** WASM module source accepted by wasm-bindgen init. Must come from a trusted source (your asset pipeline), not user input. */
+export type WasmInput =
+  | string
+  | URL
+  | Request
+  | Response
+  | BufferSource
+  | Promise<Response | BufferSource>;
+
 export interface InitOptions {
   prefer?: "napi" | "wasm";
-  wasmInput?: unknown;
+  /** Custom WASM source for browser init. Do not forward values from untrusted input (URL params, postMessage, etc.). */
+  wasmInput?: WasmInput;
 }
