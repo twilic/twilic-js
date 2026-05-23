@@ -108,8 +108,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify tag and package version
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          RELEASE_TAG="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}"
+          RELEASE_TAG="${INPUT_TAG:-$REF_NAME}"
           node ./scripts/verify-tag-version.mjs "$RELEASE_TAG"
 
       - name: Download all native artifacts
