@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- PR Message Check: skip template validation for Dependabot pull requests.
 - CI and publish workflows: explicit `permissions: contents: read` and `persist-credentials: false` on checkout steps that do not push (#17).
 - `publish-npm.yml`: route `workflow_dispatch` tag input through env vars instead of shell interpolation (#13).
 - CI and publish workflows: SHA-pin third-party GitHub Actions (#15).
