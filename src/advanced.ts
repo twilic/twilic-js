@@ -23,6 +23,7 @@ import type { RuntimeKind, RuntimeSessionEncoder } from "./runtime/types.js";
 
 export type {
   InitOptions,
+  WasmInput,
   TwilicValue,
   Schema,
   SchemaField,
