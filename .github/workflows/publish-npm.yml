@@ -61,7 +61,7 @@ jobs:
         run: pnpm build:napi
 
       - name: Upload native artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-${{ matrix.platform }}-${{ matrix.arch }}
           path: native/twilic_napi-${{ matrix.platform }}-${{ matrix.arch }}.node
