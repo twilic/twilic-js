@@ -15,6 +15,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const author = context.payload.pull_request.user.login;
+            if (
+              author === 'dependabot[bot]' ||
+              author === 'dependabot-preview[bot]'
+            ) {
+              core.info(`Skipping PR body validation for ${author}.`);
+              return;
+            }
+
             const body = context.payload.pull_request.body ?? '';
 
             const errors = [];
