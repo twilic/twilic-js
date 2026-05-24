@@ -1,4 +1,4 @@
-import { mkdir, copyFile } from "node:fs/promises";
+import { mkdir, copyFile, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -16,6 +16,19 @@ const sourceFile = resolveSourceBinary(path.join(cargoTargetDir, "release"));
 
 await mkdir(targetDir, { recursive: true });
 await copyFile(sourceFile, targetFile);
+await pruneLegacyNativeAddons(targetDir);
+
+async function pruneLegacyNativeAddons(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(".node")) {
+      continue;
+    }
+    if (!entry.name.startsWith("twilic_napi-")) {
+      await unlink(path.join(dir, entry.name));
+    }
+  }
+}
 
 function resolveSourceBinary(releaseDir) {
   if (process.platform === "darwin") {

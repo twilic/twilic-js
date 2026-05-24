@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- npm `files:` allowlist no longer ships `crates/` or `scripts/`; `build:wasm` removes `wasm/pkg/.gitignore` so WASM artifacts are included; `verify:pack` guards the publish tarball (#10).
 - CI and publish workflows: pin `twilic/twilic-rust` via `.github/twilic-rust-ref` instead of an unpinned `git clone` of default branch (#16).
 - N-API v2 decoder: bound shape/array/map allocation sizes and use `try_reserve` so hostile varuints return catchable errors instead of aborting the Node process (#7).
 - `measure-bundle.mjs`: use `npm pack --ignore-scripts` so prepack build logs do not break `--json` parsing in PR bundle reports (#31).
