@@ -202,6 +202,29 @@ function buildDeepNestedV2Array(depth) {
   return bytes;
 }
 
+function appendVaruint(bytes, n) {
+  let value = BigInt(n);
+  while (value >= 0x80n) {
+    bytes.push(Number((value & 0x7fn) | 0x80n));
+    value >>= 7n;
+  }
+  bytes.push(Number(value));
+}
+
+function buildHostileShapeKeyCountPayload(keyCount) {
+  const bytes = [];
+  bytes.push(0xd3, 0, 0, 0, 1);
+  bytes.push(0xd6);
+  appendVaruint(bytes, 0);
+  appendVaruint(bytes, keyCount);
+  return new Uint8Array(bytes);
+}
+
+test("rejects hostile v2 shape key_count in native decode", async () => {
+  const payload = buildHostileShapeKeyCountPayload(10_000_000);
+  assert.throws(() => decode(payload), /exceeds limit|allocation failed/);
+});
+
 test("rejects deeply nested v2 arrays in the fast codec", () => {
   const tooDeep = buildDeepNestedV2Array(DEFAULT_MAX_DECODE_DEPTH + 1);
   assert.throws(
