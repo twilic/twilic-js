@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Decoders enforce a default maximum nesting depth of 64 for v2 arrays and maps in the TypeScript fast codec, N-API native v2 path, and `twilic-rust` v2 decode used by the bridge/WASM backends; exceeding the limit throws `TwilicDecodeError` in JS or returns a depth-limit error in native/WASM paths (#8).
 - PR Message Check: skip template validation for Dependabot pull requests.
 - CI and publish workflows: explicit `permissions: contents: read` and `persist-credentials: false` on checkout steps that do not push (#17).
 - `publish-npm.yml`: route `workflow_dispatch` tag input through env vars instead of shell interpolation (#13).

@@ -778,9 +778,10 @@ fn value_to_js_unknown(env: &Env, value: Value) -> napi::Result<JsUnknown> {
 
 fn try_decode_native_root_message(env: &Env, bytes: &[u8]) -> napi::Result<Option<JsUnknown>> {
     let mut reader = Reader::new(bytes);
+    let mut depth = DecodeDepth::new();
     let decoded = match reader.read_u8() {
         Ok(MESSAGE_SCALAR) => {
-            let value = read_native_value(env, &mut reader)?;
+            let value = read_native_value(env, &mut reader, &mut depth)?;
             let Some(value) = value else {
                 return Ok(None);
             };
@@ -792,7 +793,7 @@ fn try_decode_native_root_message(env: &Env, bytes: &[u8]) -> napi::Result<Optio
                 .map_err(|e| invalid_arg(&e.to_string()))? as usize;
             let array = create_array_with_length_raw(env, length)?;
             for index in 0..length {
-                let value = read_native_value(env, &mut reader)?;
+                let value = read_native_value(env, &mut reader, &mut depth)?;
                 let Some(value) = value else {
                     return Ok(None);
                 };
@@ -811,7 +812,7 @@ fn try_decode_native_root_message(env: &Env, bytes: &[u8]) -> napi::Result<Optio
                     return Ok(None);
                 }
                 let key = read_native_str(&mut reader)?;
-                let value = read_native_value(env, &mut reader)?;
+                let value = read_native_value(env, &mut reader, &mut depth)?;
                 let Some(value) = value else {
                     return Ok(None);
                 };
@@ -829,7 +830,11 @@ fn try_decode_native_root_message(env: &Env, bytes: &[u8]) -> napi::Result<Optio
     Ok(decoded)
 }
 
-fn read_native_value(env: &Env, reader: &mut Reader<'_>) -> napi::Result<Option<sys::napi_value>> {
+fn read_native_value(
+    env: &Env,
+    reader: &mut Reader<'_>,
+    depth: &mut DecodeDepth,
+) -> napi::Result<Option<sys::napi_value>> {
     match reader.read_u8().map_err(|e| invalid_arg(&e.to_string()))? {
         TAG_NULL => create_null_raw(env).map(Some),
         TAG_BOOL_FALSE => create_boolean_raw(env, false).map(Some),
@@ -875,33 +880,43 @@ fn read_native_value(env: &Env, reader: &mut Reader<'_>) -> napi::Result<Option<
             create_buffer_copy_raw(env, bytes).map(Some)
         }
         TAG_ARRAY => {
+            depth.enter_container()?;
             let length = reader
                 .read_varuint()
                 .map_err(|e| invalid_arg(&e.to_string()))? as usize;
             let array = create_array_with_length_raw(env, length)?;
-            for index in 0..length {
-                let value = read_native_value(env, reader)?;
-                let Some(value) = value else {
-                    return Ok(None);
-                };
-                set_element_raw(env, &array, index as u32, value)?;
-            }
-            Ok(Some(unsafe { array.raw() }))
+            let decoded = (|| {
+                for index in 0..length {
+                    let value = read_native_value(env, reader, depth)?;
+                    let Some(value) = value else {
+                        return Ok(None);
+                    };
+                    set_element_raw(env, &array, index as u32, value)?;
+                }
+                Ok(Some(unsafe { array.raw() }))
+            })();
+            depth.leave_container();
+            decoded
         }
         TAG_MAP => {
+            depth.enter_container()?;
             let length = reader
                 .read_varuint()
                 .map_err(|e| invalid_arg(&e.to_string()))? as usize;
             let object = create_object_raw(env)?;
-            for _ in 0..length {
-                let key = read_native_str(reader)?;
-                let value = read_native_value(env, reader)?;
-                let Some(value) = value else {
-                    return Ok(None);
-                };
-                set_named_property_fast(env, &object, key, value)?;
-            }
-            Ok(Some(unsafe { object.raw() }))
+            let decoded = (|| {
+                for _ in 0..length {
+                    let key = read_native_str(reader)?;
+                    let value = read_native_value(env, reader, depth)?;
+                    let Some(value) = value else {
+                        return Ok(None);
+                    };
+                    set_named_property_fast(env, &object, key, value)?;
+                }
+                Ok(Some(unsafe { object.raw() }))
+            })();
+            depth.leave_container();
+            decoded
         }
         _ => Ok(None),
     }
@@ -916,12 +931,45 @@ pub fn encode_native_napi(env: Env, value: JsUnknown) -> napi::Result<Buffer> {
 
 // ── Direct v2 format → JS decoder ────────────────────────────────────────
 
+const DEFAULT_MAX_DECODE_DEPTH: usize = 64;
+const DECODE_DEPTH_LIMIT_MSG: &str = "decode depth limit exceeded";
+
+struct DecodeDepth {
+    depth: usize,
+    max_depth: usize,
+}
+
+impl DecodeDepth {
+    fn new() -> Self {
+        Self {
+            depth: 0,
+            max_depth: DEFAULT_MAX_DECODE_DEPTH,
+        }
+    }
+
+    fn enter_container(&mut self) -> napi::Result<()> {
+        if self.depth >= self.max_depth {
+            return Err(invalid_arg(&format!(
+                "{DECODE_DEPTH_LIMIT_MSG} (max {})",
+                self.max_depth
+            )));
+        }
+        self.depth += 1;
+        Ok(())
+    }
+
+    fn leave_container(&mut self) {
+        self.depth = self.depth.saturating_sub(1);
+    }
+}
+
 struct V2DecodeState {
     keys: Vec<sys::napi_value>,
     key_safe: Vec<bool>,
     strings: Vec<sys::napi_value>,
     shapes: Vec<Vec<sys::napi_value>>,
     shape_key_safe: Vec<Vec<bool>>,
+    depth: DecodeDepth,
 }
 
 struct V2MapKey {
@@ -955,6 +1003,7 @@ fn try_decode_v2_native(env: &Env, bytes: &[u8]) -> napi::Result<Option<sys::nap
         strings: Vec::new(),
         shapes: Vec::new(),
         shape_key_safe: Vec::new(),
+        depth: DecodeDepth::new(),
     };
     let value = decode_v2_value_raw(env, &mut reader, &mut state)?;
     if !reader.is_eof() {
@@ -1137,6 +1186,18 @@ fn decode_v2_array_raw(
     state: &mut V2DecodeState,
     len: usize,
 ) -> napi::Result<sys::napi_value> {
+    state.depth.enter_container()?;
+    let decoded = decode_v2_array_raw_inner(env, reader, state, len);
+    state.depth.leave_container();
+    decoded
+}
+
+fn decode_v2_array_raw_inner(
+    env: &Env,
+    reader: &mut Reader<'_>,
+    state: &mut V2DecodeState,
+    len: usize,
+) -> napi::Result<sys::napi_value> {
     let array = create_array_with_length_raw(env, len)?;
     let array_raw = unsafe { array.raw() };
     if len == 0 {
@@ -1206,14 +1267,19 @@ fn decode_v2_map_raw(
     state: &mut V2DecodeState,
     len: usize,
 ) -> napi::Result<sys::napi_value> {
+    state.depth.enter_container()?;
     let object = create_object_raw(env)?;
     let obj_raw = unsafe { object.raw() };
-    for _ in 0..len {
-        let key = decode_v2_key_raw(env, reader, state)?;
-        let val = decode_v2_value_raw(env, reader, state)?;
-        set_v2_map_property(env, obj_raw, key, val)?;
-    }
-    Ok(obj_raw)
+    let decoded = (|| {
+        for _ in 0..len {
+            let key = decode_v2_key_raw(env, reader, state)?;
+            let val = decode_v2_value_raw(env, reader, state)?;
+            set_v2_map_property(env, obj_raw, key, val)?;
+        }
+        Ok(obj_raw)
+    })();
+    state.depth.leave_container();
+    decoded
 }
 
 fn decode_v2_key_raw(
