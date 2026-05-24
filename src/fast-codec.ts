@@ -1,3 +1,8 @@
+import {
+  decodeDepthLimitMessage,
+  DEFAULT_MAX_DECODE_DEPTH,
+  TwilicDecodeError,
+} from "./errors.js";
 import { createDecodedMap, setDecodedMapEntry } from "./safe-map-key.js";
 import type { TwilicValue } from "./types.js";
 
@@ -33,8 +38,12 @@ const MAX_I64 = (1n << 63n) - 1n;
 
 const ENCODE_CACHE_LIMIT = 4096;
 const DECODE_FAIL = Symbol("decode_fail");
+const DECODE_DEPTH_EXCEEDED = Symbol("decode_depth_exceeded");
 
-type DecodeValue = TwilicValue | typeof DECODE_FAIL;
+type DecodeValue =
+  | TwilicValue
+  | typeof DECODE_FAIL
+  | typeof DECODE_DEPTH_EXCEEDED;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -58,6 +67,8 @@ const pooledState: DecodeState = {
   keys: sharedKeys,
   strings: sharedStrings,
   shapes: sharedShapes,
+  depth: 0,
+  maxDepth: DEFAULT_MAX_DECODE_DEPTH,
 };
 
 // Reuse Maps across encodeFast calls to avoid per-call GC pressure
@@ -89,12 +100,17 @@ export function tryDecodeFast(bytes: Uint8Array): TwilicValue | undefined {
   sharedKeys.length = 0;
   sharedStrings.length = 0;
   sharedShapes.length = 0;
+  pooledState.depth = 0;
+  pooledState.maxDepth = DEFAULT_MAX_DECODE_DEPTH;
   if (pooledReader === null) {
     pooledReader = new ByteReader();
   }
   pooledReader.reset(bytes);
 
   const decoded = decodeRoot(bytes);
+  if (decoded === DECODE_DEPTH_EXCEEDED) {
+    throw new TwilicDecodeError(decodeDepthLimitMessage(pooledState.maxDepth));
+  }
   if (decoded === DECODE_FAIL || pooledReader.offset < bytes.byteLength) {
     return undefined;
   }
@@ -488,6 +504,27 @@ interface DecodeState {
   keys: string[];
   strings: string[];
   shapes: string[][];
+  depth: number;
+  maxDepth: number;
+}
+
+function enterDecodeContainer(
+  state: DecodeState,
+): typeof DECODE_DEPTH_EXCEEDED | void {
+  if (state.depth >= state.maxDepth) {
+    return DECODE_DEPTH_EXCEEDED;
+  }
+  state.depth += 1;
+}
+
+function leaveDecodeContainer(state: DecodeState): void {
+  state.depth -= 1;
+}
+
+function isDecodeFailure(
+  value: DecodeValue,
+): value is typeof DECODE_FAIL | typeof DECODE_DEPTH_EXCEEDED {
+  return value === DECODE_FAIL || value === DECODE_DEPTH_EXCEEDED;
 }
 
 interface EncodeState {
@@ -661,7 +698,30 @@ function decodeFixMapInline(
   reader: ByteReader,
   state: DecodeState,
   count: number,
-): { [key: string]: TwilicValue } | typeof DECODE_FAIL {
+):
+  | { [key: string]: TwilicValue }
+  | typeof DECODE_FAIL
+  | typeof DECODE_DEPTH_EXCEEDED {
+  const depthError = enterDecodeContainer(state);
+  if (depthError === DECODE_DEPTH_EXCEEDED) {
+    return DECODE_DEPTH_EXCEEDED;
+  }
+  try {
+    return decodeFixMapInlineBody(bytes, reader, state, count);
+  } finally {
+    leaveDecodeContainer(state);
+  }
+}
+
+function decodeFixMapInlineBody(
+  bytes: Uint8Array,
+  reader: ByteReader,
+  state: DecodeState,
+  count: number,
+):
+  | { [key: string]: TwilicValue }
+  | typeof DECODE_FAIL
+  | typeof DECODE_DEPTH_EXCEEDED {
   const out = createDecodedMap();
 
   for (let i = 0; i < count; i += 1) {
@@ -682,8 +742,8 @@ function decodeFixMapInline(
       if (decoded === null) {
         reader.offset = offset - 1;
         const fallbackKey = readKey(reader, state);
-        if (fallbackKey === DECODE_FAIL) {
-          return DECODE_FAIL;
+        if (isDecodeFailure(fallbackKey)) {
+          return fallbackKey;
         }
         key = fallbackKey;
       } else {
@@ -695,8 +755,8 @@ function decodeFixMapInline(
     } else {
       reader.offset = offset - 1;
       const fallbackKey = readKey(reader, state);
-      if (fallbackKey === DECODE_FAIL) {
-        return DECODE_FAIL;
+      if (isDecodeFailure(fallbackKey)) {
+        return fallbackKey;
       }
       key = fallbackKey;
     }
@@ -757,8 +817,8 @@ function decodeFixMapInline(
       if (decoded === null) {
         reader.offset = offset - 1;
         const fallbackValue = readValueAuto(reader, state);
-        if (fallbackValue === DECODE_FAIL) {
-          return DECODE_FAIL;
+        if (isDecodeFailure(fallbackValue)) {
+          return fallbackValue;
         }
         value = fallbackValue;
       } else {
@@ -769,15 +829,15 @@ function decodeFixMapInline(
     } else if (valueTag >= 0xb0 && valueTag <= 0xbf) {
       reader.offset = offset;
       const nested = decodeFixMapInline(bytes, reader, state, valueTag & 0x0f);
-      if (nested === DECODE_FAIL) {
-        return DECODE_FAIL;
+      if (isDecodeFailure(nested)) {
+        return nested;
       }
       value = nested;
     } else {
       reader.offset = offset - 1;
       const fallbackValue = readValueAuto(reader, state);
-      if (fallbackValue === DECODE_FAIL) {
-        return DECODE_FAIL;
+      if (isDecodeFailure(fallbackValue)) {
+        return fallbackValue;
       }
       value = fallbackValue;
     }
@@ -792,7 +852,23 @@ function readArrayValue(
   reader: ByteReader,
   state: DecodeState,
   length: number,
-): TwilicValue[] | typeof DECODE_FAIL {
+): TwilicValue[] | typeof DECODE_FAIL | typeof DECODE_DEPTH_EXCEEDED {
+  const depthError = enterDecodeContainer(state);
+  if (depthError === DECODE_DEPTH_EXCEEDED) {
+    return DECODE_DEPTH_EXCEEDED;
+  }
+  try {
+    return readArrayValueBody(reader, state, length);
+  } finally {
+    leaveDecodeContainer(state);
+  }
+}
+
+function readArrayValueBody(
+  reader: ByteReader,
+  state: DecodeState,
+  length: number,
+): TwilicValue[] | typeof DECODE_FAIL | typeof DECODE_DEPTH_EXCEEDED {
   // oxlint-disable-next-line unicorn/no-new-array
   const out = new Array<TwilicValue>(length);
   if (length === 0) {
@@ -812,8 +888,8 @@ function readArrayValue(
     const keys = new Array<string>(keyCount);
     for (let i = 0; i < keyCount; i += 1) {
       const key = readKey(reader, state);
-      if (key === DECODE_FAIL) {
-        return DECODE_FAIL;
+      if (isDecodeFailure(key)) {
+        return key;
       }
       keys[i] = key;
     }
@@ -822,8 +898,8 @@ function readArrayValue(
       const row = createDecodedMap();
       for (let j = 0; j < keys.length; j += 1) {
         const item = readValueAuto(reader, state);
-        if (item === DECODE_FAIL) {
-          return DECODE_FAIL;
+        if (isDecodeFailure(item)) {
+          return item;
         }
         setDecodedMapEntry(row, keys[j], item);
       }
@@ -832,14 +908,14 @@ function readArrayValue(
     return out;
   }
   const first = readValueWithTag(reader, state, firstTag);
-  if (first === DECODE_FAIL) {
-    return DECODE_FAIL;
+  if (isDecodeFailure(first)) {
+    return first;
   }
   out[0] = first;
   for (let index = 1; index < length; index += 1) {
     const item = readValueAuto(reader, state);
-    if (item === DECODE_FAIL) {
-      return DECODE_FAIL;
+    if (isDecodeFailure(item)) {
+      return item;
     }
     out[index] = item;
   }
@@ -850,16 +926,38 @@ function readMapValue(
   reader: ByteReader,
   state: DecodeState,
   length: number,
-): { [key: string]: TwilicValue } | typeof DECODE_FAIL {
+):
+  | { [key: string]: TwilicValue }
+  | typeof DECODE_FAIL
+  | typeof DECODE_DEPTH_EXCEEDED {
+  const depthError = enterDecodeContainer(state);
+  if (depthError === DECODE_DEPTH_EXCEEDED) {
+    return DECODE_DEPTH_EXCEEDED;
+  }
+  try {
+    return readMapValueBody(reader, state, length);
+  } finally {
+    leaveDecodeContainer(state);
+  }
+}
+
+function readMapValueBody(
+  reader: ByteReader,
+  state: DecodeState,
+  length: number,
+):
+  | { [key: string]: TwilicValue }
+  | typeof DECODE_FAIL
+  | typeof DECODE_DEPTH_EXCEEDED {
   const out = createDecodedMap();
   for (let index = 0; index < length; index += 1) {
     const key = readKey(reader, state);
-    if (key === DECODE_FAIL) {
-      return DECODE_FAIL;
+    if (isDecodeFailure(key)) {
+      return key;
     }
     const value = readValueAuto(reader, state);
-    if (value === DECODE_FAIL) {
-      return DECODE_FAIL;
+    if (isDecodeFailure(value)) {
+      return value;
     }
     setDecodedMapEntry(out, key, value);
   }

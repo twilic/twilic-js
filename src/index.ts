@@ -18,6 +18,11 @@ export type {
   SessionOptions,
   UnknownReferencePolicy,
 } from "./types.js";
+export {
+  DEFAULT_MAX_DECODE_DEPTH,
+  TwilicDecodeError,
+  decodeDepthLimitMessage,
+} from "./errors.js";
 
 type EncodeImpl = (value: TwilicValue) => Uint8Array;
 type DecodeImpl = (bytes: Uint8Array) => TwilicValue;

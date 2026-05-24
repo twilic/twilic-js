@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createSessionEncoder, decode, encode, init } from "../dist/index.js";
+import {
+  DEFAULT_MAX_DECODE_DEPTH,
+  TwilicDecodeError,
+  createSessionEncoder,
+  decode,
+  encode,
+  init,
+} from "../dist/index.js";
 import { encodeFast, tryDecodeFast } from "../dist/fast-codec.js";
 import { fromTransportValue } from "../dist/transport.js";
 import {
@@ -186,6 +193,41 @@ test("supports advanced session encoder APIs", async () => {
 
   assert.ok(first.length > 0);
   assert.ok(patch.length > 0);
+});
+
+function buildDeepNestedV2Array(depth) {
+  const bytes = new Uint8Array(depth + 1);
+  bytes.fill(0xa1, 0, depth);
+  bytes[depth] = 0xc0;
+  return bytes;
+}
+
+test("rejects deeply nested v2 arrays in the fast codec", () => {
+  const tooDeep = buildDeepNestedV2Array(DEFAULT_MAX_DECODE_DEPTH + 1);
+  assert.throws(
+    () => tryDecodeFast(tooDeep),
+    (error) =>
+      error instanceof TwilicDecodeError &&
+      error.code === "DECODE_DEPTH_EXCEEDED",
+  );
+});
+
+test("rejects deeply nested v2 arrays in decode()", async () => {
+  const tooDeep = buildDeepNestedV2Array(DEFAULT_MAX_DECODE_DEPTH + 1);
+  assert.throws(() => decode(tooDeep), /decode depth limit exceeded/);
+});
+
+test("allows v2 arrays nested up to the default depth limit", () => {
+  const atLimit = buildDeepNestedV2Array(DEFAULT_MAX_DECODE_DEPTH);
+  const decoded = tryDecodeFast(atLimit);
+  assert.notEqual(decoded, undefined);
+  let current = decoded;
+  for (let i = 0; i < DEFAULT_MAX_DECODE_DEPTH; i += 1) {
+    assert.ok(Array.isArray(current));
+    assert.equal(current.length, 1);
+    current = current[0];
+  }
+  assert.equal(current, null);
 });
 
 test("rejects prototype pollution keys when decoding maps", async () => {
