@@ -110,8 +110,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Confirm build artifacts are not committed
+        run: test -z "$(git ls-files '*.node' 'wasm/**/*.wasm' 2>/dev/null)"
+
       - name: Build WASM
         run: pnpm build:wasm
+
+      - name: Build native addon
+        run: pnpm build:napi
+
+      - name: Verify npm pack contents
+        run: pnpm build:ts && pnpm verify:pack
 
       - name: Type check
         run: pnpm typecheck

@@ -30,8 +30,6 @@
     "dist",
     "native",
     "wasm/pkg",
-    "crates",
-    "scripts",
     "README.md",
     "LICENSE"
   ],
@@ -39,7 +37,8 @@
     "build": "pnpm build:napi && pnpm build:wasm && pnpm build:ts",
     "build:ts": "tsc -p tsconfig.json",
     "build:napi": "cargo build --manifest-path Cargo.toml -p twilic-napi --release && node ./scripts/copy-napi.mjs",
-    "build:wasm": "wasm-pack build crates/twilic-wasm --target bundler --out-dir ../../wasm/pkg --out-name twilic_wasm --no-opt",
+    "build:wasm": "wasm-pack build crates/twilic-wasm --target bundler --out-dir ../../wasm/pkg --out-name twilic_wasm --no-opt && rm -f wasm/pkg/.gitignore",
+    "verify:pack": "node ./scripts/verify-pack-contents.mjs",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "lint": "oxlint src scripts tests",
