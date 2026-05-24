@@ -29,6 +29,8 @@ pnpm fmt:check
 pnpm lint
 ```
 
+CI and publish workflows clone [twilic/twilic-rust](https://github.com/twilic/twilic-rust) at the commit recorded in `.github/twilic-rust-ref`. Bump that file when a release requires a newer Rust crate revision.
+
 ## Commit Messages
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/).

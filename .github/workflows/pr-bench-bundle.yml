@@ -34,11 +34,21 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
+      - name: Resolve twilic-rust ref
+        id: twilic_rust_ref
+        working-directory: workspace/twilic-js
+        run: |
+          ref=$(grep -v '^#' .github/twilic-rust-ref | grep -v '^[[:space:]]*$' | head -1)
+          test -n "$ref"
+          echo "value=$ref" >> "$GITHUB_OUTPUT"
+
       - name: Checkout twilic-rust
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/twilic-rust
+          ref: ${{ steps.twilic_rust_ref.outputs.value }}
           path: workspace/twilic-rust
+          persist-credentials: false
 
       - name: Checkout benchmark
         uses: actions/checkout@v4
