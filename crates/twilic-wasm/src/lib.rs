@@ -1,11 +1,18 @@
+use serde_json::Value as JsonValue;
 use twilic_bridge::{
-    decode_to_transport_json, encode_batch_transport_json, encode_transport_json,
-    encode_with_schema_transport_json, BridgeSessionEncoder,
+    decode_to_compact_json, decode_to_transport_json, encode_batch_compact_json,
+    encode_batch_direct_from_json, encode_batch_transport_json, encode_compact_json,
+    encode_direct_from_json, encode_transport_json, encode_with_schema_transport_json,
+    BridgeSessionEncoder,
 };
 use wasm_bindgen::prelude::*;
 
 fn into_js_error(error: impl ToString) -> JsValue {
     JsValue::from_str(&error.to_string())
+}
+
+fn parse_json_value(json: String) -> Result<JsonValue, JsValue> {
+    serde_json::from_str(&json).map_err(into_js_error)
 }
 
 #[wasm_bindgen(js_name = encodeTransportJson)]
@@ -16,6 +23,33 @@ pub fn encode_transport_json_wasm(value_json: String) -> Result<Vec<u8>, JsValue
 #[wasm_bindgen(js_name = decodeToTransportJson)]
 pub fn decode_to_transport_json_wasm(bytes: &[u8]) -> Result<String, JsValue> {
     decode_to_transport_json(bytes).map_err(into_js_error)
+}
+
+#[wasm_bindgen(js_name = decodeToCompactJson)]
+pub fn decode_to_compact_json_wasm(bytes: &[u8]) -> Result<String, JsValue> {
+    decode_to_compact_json(bytes).map_err(into_js_error)
+}
+
+#[wasm_bindgen(js_name = encodeDirectTransportJson)]
+pub fn encode_direct_transport_json_wasm(value_json: String) -> Result<Vec<u8>, JsValue> {
+    let jv = parse_json_value(value_json)?;
+    encode_direct_from_json(jv).map_err(into_js_error)
+}
+
+#[wasm_bindgen(js_name = encodeBatchDirectTransportJson)]
+pub fn encode_batch_direct_transport_json_wasm(values_json: String) -> Result<Vec<u8>, JsValue> {
+    let jv = parse_json_value(values_json)?;
+    encode_batch_direct_from_json(jv).map_err(into_js_error)
+}
+
+#[wasm_bindgen(js_name = encodeCompactJson)]
+pub fn encode_compact_json_wasm(json: String) -> Result<Vec<u8>, JsValue> {
+    encode_compact_json(json).map_err(into_js_error)
+}
+
+#[wasm_bindgen(js_name = encodeBatchCompactJson)]
+pub fn encode_batch_compact_json_wasm(json: String) -> Result<Vec<u8>, JsValue> {
+    encode_batch_compact_json(json).map_err(into_js_error)
 }
 
 #[wasm_bindgen(js_name = encodeWithSchemaTransportJson)]
@@ -51,6 +85,14 @@ impl SessionEncoder {
             .map_err(into_js_error)
     }
 
+    #[wasm_bindgen(js_name = encodeDirectTransportJson)]
+    pub fn encode_direct_transport_json(&mut self, value_json: String) -> Result<Vec<u8>, JsValue> {
+        let jv = parse_json_value(value_json)?;
+        self.inner
+            .encode_direct_from_json(jv)
+            .map_err(into_js_error)
+    }
+
     #[wasm_bindgen(js_name = encodeWithSchemaTransportJson)]
     pub fn encode_with_schema_transport_json(
         &mut self,
@@ -69,10 +111,32 @@ impl SessionEncoder {
             .map_err(into_js_error)
     }
 
+    #[wasm_bindgen(js_name = encodeBatchDirectTransportJson)]
+    pub fn encode_batch_direct_transport_json(
+        &mut self,
+        values_json: String,
+    ) -> Result<Vec<u8>, JsValue> {
+        let jv = parse_json_value(values_json)?;
+        self.inner
+            .encode_batch_direct_from_json(jv)
+            .map_err(into_js_error)
+    }
+
     #[wasm_bindgen(js_name = encodePatchTransportJson)]
     pub fn encode_patch_transport_json(&mut self, value_json: String) -> Result<Vec<u8>, JsValue> {
         self.inner
             .encode_patch_transport_json(value_json)
+            .map_err(into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = encodePatchDirectTransportJson)]
+    pub fn encode_patch_direct_transport_json(
+        &mut self,
+        value_json: String,
+    ) -> Result<Vec<u8>, JsValue> {
+        let jv = parse_json_value(value_json)?;
+        self.inner
+            .encode_patch_direct_from_json(jv)
             .map_err(into_js_error)
     }
 
@@ -83,6 +147,43 @@ impl SessionEncoder {
     ) -> Result<Vec<u8>, JsValue> {
         self.inner
             .encode_micro_batch_transport_json(values_json)
+            .map_err(into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = encodeMicroBatchDirectTransportJson)]
+    pub fn encode_micro_batch_direct_transport_json(
+        &mut self,
+        values_json: String,
+    ) -> Result<Vec<u8>, JsValue> {
+        let jv = parse_json_value(values_json)?;
+        self.inner
+            .encode_micro_batch_direct_from_json(jv)
+            .map_err(into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = encodeCompactJson)]
+    pub fn encode_compact_json(&mut self, json: String) -> Result<Vec<u8>, JsValue> {
+        self.inner.encode_compact_json(json).map_err(into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = encodeBatchCompactJson)]
+    pub fn encode_batch_compact_json(&mut self, json: String) -> Result<Vec<u8>, JsValue> {
+        self.inner
+            .encode_batch_compact_json(json)
+            .map_err(into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = encodePatchCompactJson)]
+    pub fn encode_patch_compact_json(&mut self, json: String) -> Result<Vec<u8>, JsValue> {
+        self.inner
+            .encode_patch_compact_json(json)
+            .map_err(into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = encodeMicroBatchCompactJson)]
+    pub fn encode_micro_batch_compact_json(&mut self, json: String) -> Result<Vec<u8>, JsValue> {
+        self.inner
+            .encode_micro_batch_compact_json(json)
             .map_err(into_js_error)
     }
 

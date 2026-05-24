@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- WASM backend: native compact and direct encode/decode paths via `twilic-bridge` (no transport-JSON fallback for compact APIs; direct paths use the fast transport parser) (#3).
+
 ### Fixed
 
 - `publish-npm.yml`: split build and OIDC publish jobs so `id-token` is only available during `npm publish`, add `environment: npm-publish`, and verify release tags are ancestors of `main` (#12, #14).
