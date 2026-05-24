@@ -281,6 +281,7 @@ fn set_element_raw(
 }
 
 fn create_array_with_length_raw(env: &Env, length: usize) -> napi::Result<JsObject> {
+    check_collection_len(length, "array length")?;
     let mut raw_value = std::ptr::null_mut();
     napi::check_status!(
         unsafe { sys::napi_create_array_with_length(env.raw(), length, &mut raw_value) },
@@ -791,6 +792,7 @@ fn try_decode_native_root_message(env: &Env, bytes: &[u8]) -> napi::Result<Optio
             let length = reader
                 .read_varuint()
                 .map_err(|e| invalid_arg(&e.to_string()))? as usize;
+            check_collection_len(length, "message array length")?;
             let array = create_array_with_length_raw(env, length)?;
             for index in 0..length {
                 let value = read_native_value(env, &mut reader, &mut depth)?;
@@ -884,6 +886,7 @@ fn read_native_value(
             let length = reader
                 .read_varuint()
                 .map_err(|e| invalid_arg(&e.to_string()))? as usize;
+            check_collection_len(length, "array length")?;
             let array = create_array_with_length_raw(env, length)?;
             let decoded = (|| {
                 for index in 0..length {
@@ -903,6 +906,7 @@ fn read_native_value(
             let length = reader
                 .read_varuint()
                 .map_err(|e| invalid_arg(&e.to_string()))? as usize;
+            check_collection_len(length, "map length")?;
             let object = create_object_raw(env)?;
             let decoded = (|| {
                 for _ in 0..length {
@@ -933,6 +937,63 @@ pub fn encode_native_napi(env: Env, value: JsUnknown) -> napi::Result<Buffer> {
 
 const DEFAULT_MAX_DECODE_DEPTH: usize = 64;
 const DECODE_DEPTH_LIMIT_MSG: &str = "decode depth limit exceeded";
+const MAX_V2_SHAPE_ID: usize = 65_536;
+const MAX_V2_SHAPE_KEY_COUNT: usize = 256;
+const MAX_V2_COLLECTION_LEN: usize = 1_048_576;
+const MAX_V2_VEC_CAPACITY: usize = 16_777_216;
+
+fn decode_limit_error(label: &str, limit: usize) -> napi::Error {
+    invalid_arg(&format!("{label} exceeds limit ({limit})"))
+}
+
+fn check_collection_len(len: usize, label: &str) -> napi::Result<()> {
+    if len > MAX_V2_COLLECTION_LEN {
+        return Err(decode_limit_error(label, MAX_V2_COLLECTION_LEN));
+    }
+    Ok(())
+}
+
+fn check_shape_id(shape_id: usize) -> napi::Result<()> {
+    if shape_id >= MAX_V2_SHAPE_ID {
+        return Err(decode_limit_error("shape_id", MAX_V2_SHAPE_ID));
+    }
+    Ok(())
+}
+
+fn check_shape_key_count(key_count: usize) -> napi::Result<()> {
+    if key_count > MAX_V2_SHAPE_KEY_COUNT {
+        return Err(decode_limit_error("shape key_count", MAX_V2_SHAPE_KEY_COUNT));
+    }
+    Ok(())
+}
+
+fn try_vec_with_capacity<T>(capacity: usize, label: &str) -> napi::Result<Vec<T>> {
+    if capacity > MAX_V2_VEC_CAPACITY {
+        return Err(decode_limit_error(label, MAX_V2_VEC_CAPACITY));
+    }
+    let mut vec = Vec::new();
+    vec.try_reserve(capacity)
+        .map_err(|_| invalid_arg(&format!("allocation failed for {label}")))?;
+    Ok(vec)
+}
+
+fn ensure_shape_table_capacity(state: &mut V2DecodeState, shape_id: usize) -> napi::Result<()> {
+    check_shape_id(shape_id)?;
+    let required = shape_id + 1;
+    if required > state.shapes.len() {
+        state
+            .shapes
+            .try_reserve(required - state.shapes.len())
+            .map_err(|_| invalid_arg("allocation failed for shape table"))?;
+        state.shapes.resize(required, Vec::new());
+        state
+            .shape_key_safe
+            .try_reserve(required - state.shape_key_safe.len())
+            .map_err(|_| invalid_arg("allocation failed for shape table"))?;
+        state.shape_key_safe.resize(required, Vec::new());
+    }
+    Ok(())
+}
 
 struct DecodeDepth {
     depth: usize,
@@ -1210,17 +1271,16 @@ fn decode_v2_array_raw_inner(
             reader.read_varuint().map_err(|e| invalid_arg(&e.to_string()))? as usize;
         let key_count =
             reader.read_varuint().map_err(|e| invalid_arg(&e.to_string()))? as usize;
-        let mut shape_keys: Vec<sys::napi_value> = Vec::with_capacity(key_count);
-        let mut shape_key_safe: Vec<bool> = Vec::with_capacity(key_count);
+        check_shape_id(shape_id)?;
+        check_shape_key_count(key_count)?;
+        let mut shape_keys = try_vec_with_capacity::<sys::napi_value>(key_count, "shape keys")?;
+        let mut shape_key_safe = try_vec_with_capacity::<bool>(key_count, "shape key flags")?;
         for _ in 0..key_count {
             let key = decode_v2_key_raw(env, reader, state)?;
             shape_keys.push(key.raw);
             shape_key_safe.push(key.safe);
         }
-        if shape_id >= state.shapes.len() {
-            state.shapes.resize(shape_id + 1, Vec::new());
-            state.shape_key_safe.resize(shape_id + 1, Vec::new());
-        }
+        ensure_shape_table_capacity(state, shape_id)?;
         state.shapes[shape_id] = shape_keys.clone();
         state.shape_key_safe[shape_id] = shape_key_safe.clone();
         for i in 0..len {
@@ -1267,6 +1327,7 @@ fn decode_v2_map_raw(
     state: &mut V2DecodeState,
     len: usize,
 ) -> napi::Result<sys::napi_value> {
+    check_collection_len(len, "map length")?;
     state.depth.enter_container()?;
     let object = create_object_raw(env)?;
     let obj_raw = unsafe { object.raw() };
