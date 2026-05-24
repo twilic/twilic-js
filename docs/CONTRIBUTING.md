@@ -33,6 +33,8 @@ pnpm lint
 
 CI and publish workflows clone [twilic/twilic-rust](https://github.com/twilic/twilic-rust) as a sibling directory at the commit recorded in `.github/twilic-rust-ref` (shallow `git fetch` of that ref). Bump that file when a release requires a newer Rust crate revision.
 
+npm releases use the `npm-publish` GitHub Environment (required reviewers) and only grant `id-token: write` in the minimal publish job after the package tarball is built.
+
 ## Commit Messages
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/).

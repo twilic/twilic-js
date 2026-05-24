@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- `publish-npm.yml`: split build and OIDC publish jobs so `id-token` is only available during `npm publish`, add `environment: npm-publish`, and verify release tags are ancestors of `main` (#12, #14).
 - Commit `Cargo.lock` and pass `--locked` to Rust builds in CI and publish so release artifacts use reviewed dependency versions (#11).
 - npm `files:` allowlist no longer ships `crates/` or `scripts/`; `build:wasm` removes `wasm/pkg/.gitignore` so WASM artifacts are included; `verify:pack` guards the publish tarball (#10).
 - CI and publish workflows: pin `twilic/twilic-rust` via `.github/twilic-rust-ref` instead of an unpinned `git clone` of default branch (#16).
