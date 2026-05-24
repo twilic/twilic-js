@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- N-API v2 decoder: bound shape/array/map allocation sizes and use `try_reserve` so hostile varuints return catchable errors instead of aborting the Node process (#7).
 - `measure-bundle.mjs`: use `npm pack --ignore-scripts` so prepack build logs do not break `--json` parsing in PR bundle reports (#31).
 - Decoders enforce a default maximum nesting depth of 64 for v2 arrays and maps in the TypeScript fast codec, N-API native v2 path, and `twilic-rust` v2 decode used by the bridge/WASM backends; exceeding the limit throws `TwilicDecodeError` in JS or returns a depth-limit error in native/WASM paths (#8).
 - PR Message Check: skip template validation for Dependabot pull requests.
