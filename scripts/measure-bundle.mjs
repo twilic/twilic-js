@@ -5,8 +5,10 @@
 //   node scripts/measure-bundle.mjs [--out PATH] [--cwd DIR]
 //
 // The report includes per-directory totals (dist, native, wasm/pkg),
-// per-file sizes, and a `npm pack --dry-run --json` snapshot so the
-// resulting tarball size can be compared between branches.
+// per-file sizes, and a `npm pack --dry-run --json --ignore-scripts` snapshot
+// so the resulting tarball size can be compared between branches. Lifecycle
+// scripts are skipped because CI already runs `pnpm build` and prepack output
+// would otherwise pollute stdout and break JSON parsing.
 
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -71,11 +73,15 @@ function summarizeDir(rootDir, label) {
 }
 
 function runNpmPackDryRun(cwd) {
-  const result = spawnSync("npm", ["pack", "--dry-run", "--json"], {
-    cwd,
-    encoding: "utf8",
-    maxBuffer: 32 * 1024 * 1024,
-  });
+  const result = spawnSync(
+    "npm",
+    ["pack", "--dry-run", "--json", "--ignore-scripts"],
+    {
+      cwd,
+      encoding: "utf8",
+      maxBuffer: 32 * 1024 * 1024,
+    },
+  );
   if (result.status !== 0) {
     return {
       ok: false,
