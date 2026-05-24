@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout twilic-js (PR head)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: workspace/twilic-js
           ref: ${{ github.event.pull_request.head.sha }}
@@ -43,7 +43,7 @@ jobs:
           echo "value=$ref" >> "$GITHUB_OUTPUT"
 
       - name: Checkout twilic-rust
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/twilic-rust
           ref: ${{ steps.twilic_rust_ref.outputs.value }}
@@ -51,7 +51,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout benchmark
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/benchmark
           path: workspace/benchmark
