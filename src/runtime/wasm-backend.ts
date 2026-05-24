@@ -7,25 +7,38 @@ import type {
 
 interface WasmSessionEncoder {
   encodeTransportJson(valueJson: string): Uint8Array;
+  encodeDirectTransportJson(valueJson: string): Uint8Array;
   encodeWithSchemaTransportJson(
     schemaJson: string,
     valueJson: string,
   ): Uint8Array;
   encodeBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeBatchDirectTransportJson(valuesJson: string): Uint8Array;
   encodePatchTransportJson(valueJson: string): Uint8Array;
+  encodePatchDirectTransportJson(valueJson: string): Uint8Array;
   encodeMicroBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeMicroBatchDirectTransportJson(valuesJson: string): Uint8Array;
+  encodeCompactJson(json: string): Uint8Array;
+  encodeBatchCompactJson(json: string): Uint8Array;
+  encodePatchCompactJson(json: string): Uint8Array;
+  encodeMicroBatchCompactJson(json: string): Uint8Array;
   reset(): void;
 }
 
 interface WasmModule {
   default: (input?: WasmInput) => Promise<unknown>;
   encodeTransportJson(valueJson: string): Uint8Array;
+  encodeDirectTransportJson(valueJson: string): Uint8Array;
   decodeToTransportJson(bytes: Uint8Array): string;
+  decodeToCompactJson(bytes: Uint8Array): string;
   encodeWithSchemaTransportJson(
     schemaJson: string,
     valueJson: string,
   ): Uint8Array;
   encodeBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeBatchDirectTransportJson(valuesJson: string): Uint8Array;
+  encodeCompactJson(json: string): Uint8Array;
+  encodeBatchCompactJson(json: string): Uint8Array;
   createSessionEncoder(optionsJson?: string): WasmSessionEncoder;
 }
 
@@ -43,20 +56,19 @@ export async function loadWasmBackend(
     kind: "wasm",
     encodeTransportJson: (valueJson) => wasm.encodeTransportJson(valueJson),
     decodeToTransportJson: (bytes) => wasm.decodeToTransportJson(bytes),
-    decodeToCompactJson: (bytes) => wasm.decodeToTransportJson(bytes), // WASM fallback
+    decodeToCompactJson: (bytes) => wasm.decodeToCompactJson(bytes),
     encodeWithSchemaTransportJson: (schemaJson, valueJson) =>
       wasm.encodeWithSchemaTransportJson(schemaJson, valueJson),
     encodeBatchTransportJson: (valuesJson) =>
       wasm.encodeBatchTransportJson(valuesJson),
-    // WASM fallback: serialize to JSON then use JSON API
-    encodeDirect: (value) => wasm.encodeTransportJson(JSON.stringify(value)),
+    encodeDirect: (value) =>
+      wasm.encodeDirectTransportJson(JSON.stringify(value)),
     decodeDirect: (bytes) =>
       JSON.parse(wasm.decodeToTransportJson(bytes)) as TransportValueObj,
     encodeBatchDirect: (values) =>
-      wasm.encodeBatchTransportJson(JSON.stringify(values)),
-    // WASM fallback: compact not available, fall through to transport JSON
-    encodeCompactJson: (json) => wasm.encodeTransportJson(json),
-    encodeBatchCompactJson: (json) => wasm.encodeBatchTransportJson(json),
+      wasm.encodeBatchDirectTransportJson(JSON.stringify(values)),
+    encodeCompactJson: (json) => wasm.encodeCompactJson(json),
+    encodeBatchCompactJson: (json) => wasm.encodeBatchCompactJson(json),
     createSessionEncoder: (optionsJson) => {
       const inner = wasm.createSessionEncoder(optionsJson);
       return wrapSessionEncoder(inner);
@@ -75,20 +87,19 @@ function wrapSessionEncoder(inner: WasmSessionEncoder): RuntimeSessionEncoder {
       inner.encodePatchTransportJson(valueJson),
     encodeMicroBatchTransportJson: (valuesJson) =>
       inner.encodeMicroBatchTransportJson(valuesJson),
-    // WASM fallback: serialize to JSON then use JSON API
-    encodeDirect: (value) => inner.encodeTransportJson(JSON.stringify(value)),
+    encodeDirect: (value) =>
+      inner.encodeDirectTransportJson(JSON.stringify(value)),
     encodeBatchDirect: (values) =>
-      inner.encodeBatchTransportJson(JSON.stringify(values)),
+      inner.encodeBatchDirectTransportJson(JSON.stringify(values)),
     encodePatchDirect: (value) =>
-      inner.encodePatchTransportJson(JSON.stringify(value)),
+      inner.encodePatchDirectTransportJson(JSON.stringify(value)),
     encodeMicroBatchDirect: (values) =>
-      inner.encodeMicroBatchTransportJson(JSON.stringify(values)),
-    // WASM fallback: compact not available, fall through to transport JSON
-    encodeCompactJson: (json) => inner.encodeTransportJson(json),
-    encodeBatchCompactJson: (json) => inner.encodeBatchTransportJson(json),
-    encodePatchCompactJson: (json) => inner.encodePatchTransportJson(json),
+      inner.encodeMicroBatchDirectTransportJson(JSON.stringify(values)),
+    encodeCompactJson: (json) => inner.encodeCompactJson(json),
+    encodeBatchCompactJson: (json) => inner.encodeBatchCompactJson(json),
+    encodePatchCompactJson: (json) => inner.encodePatchCompactJson(json),
     encodeMicroBatchCompactJson: (json) =>
-      inner.encodeMicroBatchTransportJson(json),
+      inner.encodeMicroBatchCompactJson(json),
     reset: () => inner.reset(),
   };
 }

@@ -78,3 +78,47 @@ test("session encoder encodes and patches", async () => {
   );
   assert.ok(afterReset instanceof Uint8Array && afterReset.length > 0);
 });
+
+test("direct encode and decode roundtrip", async () => {
+  const transport = {
+    t: "map",
+    v: [
+      ["id", { t: "u64", v: "1" }],
+      ["name", { t: "string", v: "alice" }],
+    ],
+  };
+  const bytes = backend.encodeDirect(transport);
+  assert.ok(bytes instanceof Uint8Array && bytes.length > 0);
+
+  const decoded = backend.decodeDirect(bytes);
+  assert.deepEqual(decoded, transport);
+});
+
+test("compact encode and decode roundtrip", async () => {
+  const compactJson = '[8,["id",[3,"1"],"name",[5,"alice"]]]';
+  const encoded = backend.encodeCompactJson(compactJson);
+  assert.ok(encoded instanceof Uint8Array && encoded.length > 0);
+
+  const decodedJson = backend.decodeToCompactJson(encoded);
+  const parsed = JSON.parse(decodedJson);
+  assert.equal(parsed[0], 8);
+  assert.equal(parsed[1][0], "id");
+});
+
+test("session encoder compact and direct paths", async () => {
+  const session = backend.createSessionEncoder();
+  const transport = {
+    t: "map",
+    v: [
+      ["id", { t: "u64", v: "42" }],
+      ["role", { t: "string", v: "admin" }],
+    ],
+  };
+  const direct = session.encodeDirect(transport);
+  assert.ok(direct instanceof Uint8Array && direct.length > 0);
+
+  const compact = session.encodeCompactJson(
+    '[8,["id",[3,"42"],"role",[5,"admin"]]]',
+  );
+  assert.ok(compact instanceof Uint8Array && compact.length > 0);
+});
