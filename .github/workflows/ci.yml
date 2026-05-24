@@ -69,8 +69,23 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Resolve twilic-rust ref
+        id: twilic_rust_ref
+        run: |
+          ref=$(grep -v '^#' .github/twilic-rust-ref | grep -v '^[[:space:]]*$' | head -1)
+          test -n "$ref"
+          echo "value=$ref" >> "$GITHUB_OUTPUT"
+
       - name: Checkout twilic-rust
-        run: git clone --depth 1 https://github.com/twilic/twilic-rust.git "${{ github.workspace }}/../twilic-rust"
+        run: |
+          set -euo pipefail
+          dest="${{ github.workspace }}/../twilic-rust"
+          ref="${{ steps.twilic_rust_ref.outputs.value }}"
+          rm -rf "$dest"
+          git init "$dest"
+          git -C "$dest" remote add origin https://github.com/twilic/twilic-rust.git
+          git -C "$dest" fetch --depth 1 origin "$ref"
+          git -C "$dest" checkout --detach FETCH_HEAD
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
@@ -114,8 +129,23 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Resolve twilic-rust ref
+        id: twilic_rust_ref
+        run: |
+          ref=$(grep -v '^#' .github/twilic-rust-ref | grep -v '^[[:space:]]*$' | head -1)
+          test -n "$ref"
+          echo "value=$ref" >> "$GITHUB_OUTPUT"
+
       - name: Checkout twilic-rust
-        run: git clone --depth 1 https://github.com/twilic/twilic-rust.git "${{ github.workspace }}/../twilic-rust"
+        run: |
+          set -euo pipefail
+          dest="${{ github.workspace }}/../twilic-rust"
+          ref="${{ steps.twilic_rust_ref.outputs.value }}"
+          rm -rf "$dest"
+          git init "$dest"
+          git -C "$dest" remote add origin https://github.com/twilic/twilic-rust.git
+          git -C "$dest" fetch --depth 1 origin "$ref"
+          git -C "$dest" checkout --detach FETCH_HEAD
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
