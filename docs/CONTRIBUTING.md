@@ -21,6 +21,8 @@ Requirements:
 - Rust stable
 - `wasm-pack` for WASM builds
 
+Rust dependencies are pinned in the workspace `Cargo.lock`. Use `cargo build --locked` / `cargo test --locked` (the `pnpm` scripts pass these flags). When updating crates, refresh the lockfile in a dedicated commit.
+
 ```bash
 pnpm install
 pnpm build

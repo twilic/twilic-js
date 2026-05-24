@@ -2,5 +2,4 @@ dist/
 native/
 wasm/
 target/
-Cargo.lock
 node_modules/
