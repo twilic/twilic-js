@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
           persist-credentials: false
@@ -90,7 +90,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
           persist-credentials: false
@@ -188,7 +188,7 @@ jobs:
 
     steps:
       - name: Checkout release ref
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
           persist-credentials: false
