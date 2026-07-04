@@ -1,18 +1,18 @@
 use std::fmt;
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
-use twilic::model::SchemaField;
-use twilic::{
-    create_session_encoder, decode, encode, encode_batch, encode_with_schema, TwilicError,
-    Schema, SessionEncoder, SessionOptions, UnknownReferencePolicy, Value,
-};
 use serde::de::{self, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::value::RawValue;
+use twilic::model::SchemaField;
+use twilic::{
+    create_session_encoder, decode, encode, encode_batch, encode_with_schema, Schema,
+    SessionEncoder, SessionOptions, TwilicError, UnknownReferencePolicy, Value,
+};
 
 // ── SIMD-JSON helpers ───────────────────────────────────────────────────────
-// simd_json::from_slice requires &mut [u8]. We accept owned Strings from N-API
-// and convert via into_bytes() — zero extra allocation.
+// simd_json::from_slice requires &mut [u8]. Owned JSON strings are converted via
+// into_bytes() so simd-json can parse in place without an extra allocation.
 
 /// Parse JSON using simd-json (fast SIMD path). Falls back gracefully since
 /// simd_json implements serde's Deserializer trait.
@@ -156,9 +156,9 @@ struct TransportSessionOptions {
     unknown_reference_policy: Option<String>,
 }
 
-pub fn encode_transport_json(mut value_json: String) -> Result<Vec<u8>> {
-    let bytes = unsafe { value_json.as_bytes_mut() };
-    let transport: TransportValue = simd_from_mut_slice(bytes)?;
+pub fn encode_transport_json(value_json: String) -> Result<Vec<u8>> {
+    let mut bytes = value_json.into_bytes();
+    let transport: TransportValue = simd_from_mut_slice(&mut bytes)?;
     let value = transport_to_value(transport)?;
     encode(&value).map_err(Into::into)
 }
@@ -177,19 +177,19 @@ pub fn decode_to_compact_json(bytes: &[u8]) -> Result<String> {
 }
 
 pub fn encode_with_schema_transport_json(
-    mut schema_json: String,
-    mut value_json: String,
+    schema_json: String,
+    value_json: String,
 ) -> Result<Vec<u8>> {
-    let schema = parse_schema_json(schema_json.as_mut_str())?;
-    let vbytes = unsafe { value_json.as_bytes_mut() };
-    let transport: TransportValue = simd_from_mut_slice(vbytes)?;
+    let schema = parse_schema_json(schema_json)?;
+    let mut vbytes = value_json.into_bytes();
+    let transport: TransportValue = simd_from_mut_slice(&mut vbytes)?;
     let value = transport_to_value(transport)?;
     encode_with_schema(&schema, &value).map_err(Into::into)
 }
 
-pub fn encode_batch_transport_json(mut values_json: String) -> Result<Vec<u8>> {
-    let bytes = unsafe { values_json.as_bytes_mut() };
-    let transports: Vec<TransportValue> = simd_from_mut_slice(bytes)?;
+pub fn encode_batch_transport_json(values_json: String) -> Result<Vec<u8>> {
+    let mut bytes = values_json.into_bytes();
+    let transports: Vec<TransportValue> = simd_from_mut_slice(&mut bytes)?;
     let values: Vec<Value> = transports
         .into_iter()
         .map(transport_to_value)
@@ -209,30 +209,30 @@ impl BridgeSessionEncoder {
         })
     }
 
-    pub fn encode_transport_json(&mut self, mut value_json: String) -> Result<Vec<u8>> {
-        let bytes = unsafe { value_json.as_bytes_mut() };
-        let transport: TransportValue = simd_from_mut_slice(bytes)?;
+    pub fn encode_transport_json(&mut self, value_json: String) -> Result<Vec<u8>> {
+        let mut bytes = value_json.into_bytes();
+        let transport: TransportValue = simd_from_mut_slice(&mut bytes)?;
         let value = transport_to_value(transport)?;
         self.inner.encode(&value).map_err(Into::into)
     }
 
     pub fn encode_with_schema_transport_json(
         &mut self,
-        mut schema_json: String,
-        mut value_json: String,
+        schema_json: String,
+        value_json: String,
     ) -> Result<Vec<u8>> {
-        let schema = parse_schema_json(schema_json.as_mut_str())?;
-        let vbytes = unsafe { value_json.as_bytes_mut() };
-        let transport: TransportValue = simd_from_mut_slice(vbytes)?;
+        let schema = parse_schema_json(schema_json)?;
+        let mut vbytes = value_json.into_bytes();
+        let transport: TransportValue = simd_from_mut_slice(&mut vbytes)?;
         let value = transport_to_value(transport)?;
         self.inner
             .encode_with_schema(&schema, &value)
             .map_err(Into::into)
     }
 
-    pub fn encode_batch_transport_json(&mut self, mut values_json: String) -> Result<Vec<u8>> {
-        let bytes = unsafe { values_json.as_bytes_mut() };
-        let transports: Vec<TransportValue> = simd_from_mut_slice(bytes)?;
+    pub fn encode_batch_transport_json(&mut self, values_json: String) -> Result<Vec<u8>> {
+        let mut bytes = values_json.into_bytes();
+        let transports: Vec<TransportValue> = simd_from_mut_slice(&mut bytes)?;
         let values: Vec<Value> = transports
             .into_iter()
             .map(transport_to_value)
@@ -240,19 +240,16 @@ impl BridgeSessionEncoder {
         self.inner.encode_batch(&values).map_err(Into::into)
     }
 
-    pub fn encode_patch_transport_json(&mut self, mut value_json: String) -> Result<Vec<u8>> {
-        let bytes = unsafe { value_json.as_bytes_mut() };
-        let transport: TransportValue = simd_from_mut_slice(bytes)?;
+    pub fn encode_patch_transport_json(&mut self, value_json: String) -> Result<Vec<u8>> {
+        let mut bytes = value_json.into_bytes();
+        let transport: TransportValue = simd_from_mut_slice(&mut bytes)?;
         let value = transport_to_value(transport)?;
         self.inner.encode_patch(&value).map_err(Into::into)
     }
 
-    pub fn encode_micro_batch_transport_json(
-        &mut self,
-        mut values_json: String,
-    ) -> Result<Vec<u8>> {
-        let bytes = unsafe { values_json.as_bytes_mut() };
-        let transports: Vec<TransportValue> = simd_from_mut_slice(bytes)?;
+    pub fn encode_micro_batch_transport_json(&mut self, values_json: String) -> Result<Vec<u8>> {
+        let mut bytes = values_json.into_bytes();
+        let transports: Vec<TransportValue> = simd_from_mut_slice(&mut bytes)?;
         let values: Vec<Value> = transports
             .into_iter()
             .map(transport_to_value)
@@ -265,9 +262,9 @@ impl BridgeSessionEncoder {
     }
 }
 
-fn parse_schema_json(schema_json: &mut str) -> Result<Schema> {
-    let bytes = unsafe { schema_json.as_bytes_mut() };
-    let schema: TransportSchema = simd_from_mut_slice(bytes)?;
+fn parse_schema_json(schema_json: String) -> Result<Schema> {
+    let mut bytes = schema_json.into_bytes();
+    let schema: TransportSchema = simd_from_mut_slice(&mut bytes)?;
     transport_schema_to_schema(schema)
 }
 
@@ -744,40 +741,40 @@ fn parse_compact_batch_str(json: &mut [u8]) -> Result<Vec<Value>> {
     Ok(items.into_iter().map(|v| v.0).collect())
 }
 
-pub fn encode_compact_json(mut json: String) -> Result<Vec<u8>> {
-    let bytes = unsafe { json.as_bytes_mut() };
-    let value = parse_compact_str(bytes)?;
+pub fn encode_compact_json(json: String) -> Result<Vec<u8>> {
+    let mut bytes = json.into_bytes();
+    let value = parse_compact_str(&mut bytes)?;
     encode(&value).map_err(Into::into)
 }
 
-pub fn encode_batch_compact_json(mut json: String) -> Result<Vec<u8>> {
-    let bytes = unsafe { json.as_bytes_mut() };
-    let values = parse_compact_batch_str(bytes)?;
+pub fn encode_batch_compact_json(json: String) -> Result<Vec<u8>> {
+    let mut bytes = json.into_bytes();
+    let values = parse_compact_batch_str(&mut bytes)?;
     encode_batch(&values).map_err(Into::into)
 }
 
 impl BridgeSessionEncoder {
-    pub fn encode_compact_json(&mut self, mut json: String) -> Result<Vec<u8>> {
-        let bytes = unsafe { json.as_bytes_mut() };
-        let value = parse_compact_str(bytes)?;
+    pub fn encode_compact_json(&mut self, json: String) -> Result<Vec<u8>> {
+        let mut bytes = json.into_bytes();
+        let value = parse_compact_str(&mut bytes)?;
         self.inner.encode(&value).map_err(Into::into)
     }
 
-    pub fn encode_batch_compact_json(&mut self, mut json: String) -> Result<Vec<u8>> {
-        let bytes = unsafe { json.as_bytes_mut() };
-        let values = parse_compact_batch_str(bytes)?;
+    pub fn encode_batch_compact_json(&mut self, json: String) -> Result<Vec<u8>> {
+        let mut bytes = json.into_bytes();
+        let values = parse_compact_batch_str(&mut bytes)?;
         self.inner.encode_batch(&values).map_err(Into::into)
     }
 
-    pub fn encode_patch_compact_json(&mut self, mut json: String) -> Result<Vec<u8>> {
-        let bytes = unsafe { json.as_bytes_mut() };
-        let value = parse_compact_str(bytes)?;
+    pub fn encode_patch_compact_json(&mut self, json: String) -> Result<Vec<u8>> {
+        let mut bytes = json.into_bytes();
+        let value = parse_compact_str(&mut bytes)?;
         self.inner.encode_patch(&value).map_err(Into::into)
     }
 
-    pub fn encode_micro_batch_compact_json(&mut self, mut json: String) -> Result<Vec<u8>> {
-        let bytes = unsafe { json.as_bytes_mut() };
-        let values = parse_compact_batch_str(bytes)?;
+    pub fn encode_micro_batch_compact_json(&mut self, json: String) -> Result<Vec<u8>> {
+        let mut bytes = json.into_bytes();
+        let values = parse_compact_batch_str(&mut bytes)?;
         self.inner.encode_micro_batch(&values).map_err(Into::into)
     }
 }
