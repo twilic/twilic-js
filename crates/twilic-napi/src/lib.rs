@@ -50,24 +50,28 @@ thread_local! {
 // construction from sys::napi_value and for extracting raw handles.
 #[inline(always)]
 fn js_unknown_from_raw_unchecked(env: &Env, raw: sys::napi_value) -> JsUnknown {
+    // SAFETY: `raw` must come from the same `Env` and remain valid for the call.
     // nosemgrep: rust.lang.security.unsafe-usage.unsafe-usage
     unsafe { JsUnknown::from_raw_unchecked(env.raw(), raw) }
 }
 
 #[inline(always)]
 fn js_object_from_raw_unchecked(env: &Env, raw: sys::napi_value) -> JsObject {
+    // SAFETY: `raw` must come from the same `Env` and remain valid for the call.
     // nosemgrep: rust.lang.security.unsafe-usage.unsafe-usage
     unsafe { JsObject::from_raw_unchecked(env.raw(), raw) }
 }
 
 #[inline(always)]
 fn napi_value_raw<T: NapiRaw>(value: &T) -> sys::napi_value {
+    // SAFETY: `value` must be a live napi-rs handle tied to the current `Env`.
     // nosemgrep: rust.lang.security.unsafe-usage.unsafe-usage
     unsafe { value.raw() }
 }
 
 #[inline(always)]
 fn napi_value_cast<T: NapiValue>(value: &JsUnknown) -> T {
+    // SAFETY: Callers must ensure `value` is actually a `T` before casting.
     // nosemgrep: rust.lang.security.unsafe-usage.unsafe-usage
     unsafe { value.cast::<T>() }
 }
