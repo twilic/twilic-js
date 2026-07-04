@@ -1658,15 +1658,14 @@ fn js_to_twilic_value(env: &Env, value: JsUnknown) -> napi::Result<Value> {
 
 #[napi(js_name = "encodeBatchNativeRaw")]
 pub fn encode_batch_native_raw_napi(env: Env, values: JsUnknown) -> napi::Result<Buffer> {
-    let object = napi_value_cast::<JsObject>(&values);
-    let object_raw = napi_value_raw(&object);
-    if !is_array_raw(&env, object_raw)? {
+    let values_raw = napi_value_raw(&values);
+    if !is_array_raw(&env, values_raw)? {
         return Err(invalid_arg("encodeBatchNativeRaw: expected array"));
     }
-    let length = get_array_length_raw(&env, object_raw)? as usize;
+    let length = get_array_length_raw(&env, values_raw)? as usize;
     let mut rust_values = Vec::with_capacity(length);
     for i in 0..length {
-        let item = get_element_raw(&env, object_raw, i as u32)?;
+        let item = get_element_raw(&env, values_raw, i as u32)?;
         rust_values.push(js_to_twilic_value(&env, item)?);
     }
     encode_batch_native_raw(rust_values)
