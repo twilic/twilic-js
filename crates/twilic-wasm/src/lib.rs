@@ -1,9 +1,10 @@
 use serde_json::Value as JsonValue;
 use twilic_bridge::{
     decode_to_compact_json, decode_to_transport_json, encode_batch_compact_json,
-    encode_batch_direct_from_json, encode_batch_transport_json, encode_compact_json,
-    encode_direct_from_json, encode_transport_json, encode_with_schema_transport_json,
-    BridgeSessionEncoder,
+    encode_batch_direct_from_json, encode_batch_transport_json,
+    encode_batch_with_schema_transport_json, encode_bound_stream_transport_json,
+    encode_compact_json, encode_direct_from_json, encode_transport_json,
+    encode_with_schema_transport_json, BridgeSessionEncoder,
 };
 use wasm_bindgen::prelude::*;
 
@@ -65,6 +66,22 @@ pub fn encode_batch_transport_json_wasm(values_json: String) -> Result<Vec<u8>, 
     encode_batch_transport_json(values_json).map_err(into_js_error)
 }
 
+#[wasm_bindgen(js_name = encodeBoundStreamTransportJson)]
+pub fn encode_bound_stream_transport_json_wasm(
+    schema_json: String,
+    values_json: String,
+) -> Result<Vec<u8>, JsValue> {
+    encode_bound_stream_transport_json(schema_json, values_json).map_err(into_js_error)
+}
+
+#[wasm_bindgen(js_name = encodeBatchWithSchemaTransportJson)]
+pub fn encode_batch_with_schema_transport_json_wasm(
+    schema_json: String,
+    values_json: String,
+) -> Result<Vec<u8>, JsValue> {
+    encode_batch_with_schema_transport_json(schema_json, values_json).map_err(into_js_error)
+}
+
 #[wasm_bindgen]
 pub struct SessionEncoder {
     inner: BridgeSessionEncoder,
@@ -108,6 +125,28 @@ impl SessionEncoder {
     pub fn encode_batch_transport_json(&mut self, values_json: String) -> Result<Vec<u8>, JsValue> {
         self.inner
             .encode_batch_transport_json(values_json)
+            .map_err(into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = encodeBoundStreamTransportJson)]
+    pub fn encode_bound_stream_transport_json(
+        &mut self,
+        schema_json: String,
+        values_json: String,
+    ) -> Result<Vec<u8>, JsValue> {
+        self.inner
+            .encode_bound_stream_transport_json(schema_json, values_json)
+            .map_err(into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = encodeBatchWithSchemaTransportJson)]
+    pub fn encode_batch_with_schema_transport_json(
+        &mut self,
+        schema_json: String,
+        values_json: String,
+    ) -> Result<Vec<u8>, JsValue> {
+        self.inner
+            .encode_batch_with_schema_transport_json(schema_json, values_json)
             .map_err(into_js_error)
     }
 

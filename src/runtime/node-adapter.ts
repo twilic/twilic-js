@@ -11,6 +11,14 @@ export interface NativeSessionEncoder {
     valueJson: string,
   ): Uint8Array;
   encodeBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeBoundStreamTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
+  encodeBatchWithSchemaTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
   encodePatchTransportJson(valueJson: string): Uint8Array;
   encodeMicroBatchTransportJson(valuesJson: string): Uint8Array;
   encodeDirect(value: TransportValueObj): Uint8Array;
@@ -35,6 +43,14 @@ export interface NativeModule {
     valueJson: string,
   ): Uint8Array;
   encodeBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeBoundStreamTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
+  encodeBatchWithSchemaTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
   encodeDirect(value: TransportValueObj): Uint8Array;
   decodeDirect(bytes: Uint8Array): TransportValueObj;
   encodeBatchDirect(values: TransportValueObj[]): Uint8Array;
@@ -57,6 +73,14 @@ export function createNodeRuntimeBackend(native: NativeModule): RuntimeBackend {
       asUint8Array(native.encodeWithSchemaTransportJson(schemaJson, valueJson)),
     encodeBatchTransportJson: (valuesJson) =>
       asUint8Array(native.encodeBatchTransportJson(valuesJson)),
+    encodeBoundStreamTransportJson: (schemaJson, valuesJson) =>
+      asUint8Array(
+        native.encodeBoundStreamTransportJson(schemaJson, valuesJson),
+      ),
+    encodeBatchWithSchemaTransportJson: (schemaJson, valuesJson) =>
+      asUint8Array(
+        native.encodeBatchWithSchemaTransportJson(schemaJson, valuesJson),
+      ),
     encodeDirect: (value) => asUint8Array(native.encodeDirect(value)),
     decodeDirect: (bytes) => native.decodeDirect(bytes),
     encodeBatchDirect: (values) =>
@@ -83,6 +107,14 @@ function wrapSessionEncoder(
       asUint8Array(inner.encodeWithSchemaTransportJson(schemaJson, valueJson)),
     encodeBatchTransportJson: (valuesJson) =>
       asUint8Array(inner.encodeBatchTransportJson(valuesJson)),
+    encodeBoundStreamTransportJson: (schemaJson, valuesJson) =>
+      asUint8Array(
+        inner.encodeBoundStreamTransportJson(schemaJson, valuesJson),
+      ),
+    encodeBatchWithSchemaTransportJson: (schemaJson, valuesJson) =>
+      asUint8Array(
+        inner.encodeBatchWithSchemaTransportJson(schemaJson, valuesJson),
+      ),
     encodePatchTransportJson: (valueJson) =>
       asUint8Array(inner.encodePatchTransportJson(valueJson)),
     encodeMicroBatchTransportJson: (valuesJson) =>

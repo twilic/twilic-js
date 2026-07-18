@@ -13,6 +13,14 @@ interface WasmSessionEncoder {
     valueJson: string,
   ): Uint8Array;
   encodeBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeBoundStreamTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
+  encodeBatchWithSchemaTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
   encodeBatchDirectTransportJson(valuesJson: string): Uint8Array;
   encodePatchTransportJson(valueJson: string): Uint8Array;
   encodePatchDirectTransportJson(valueJson: string): Uint8Array;
@@ -36,6 +44,14 @@ interface WasmModule {
     valueJson: string,
   ): Uint8Array;
   encodeBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeBoundStreamTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
+  encodeBatchWithSchemaTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
   encodeBatchDirectTransportJson(valuesJson: string): Uint8Array;
   encodeCompactJson(json: string): Uint8Array;
   encodeBatchCompactJson(json: string): Uint8Array;
@@ -61,6 +77,10 @@ export async function loadWasmBackend(
       wasm.encodeWithSchemaTransportJson(schemaJson, valueJson),
     encodeBatchTransportJson: (valuesJson) =>
       wasm.encodeBatchTransportJson(valuesJson),
+    encodeBoundStreamTransportJson: (schemaJson, valuesJson) =>
+      wasm.encodeBoundStreamTransportJson(schemaJson, valuesJson),
+    encodeBatchWithSchemaTransportJson: (schemaJson, valuesJson) =>
+      wasm.encodeBatchWithSchemaTransportJson(schemaJson, valuesJson),
     encodeDirect: (value) =>
       wasm.encodeDirectTransportJson(JSON.stringify(value)),
     decodeDirect: (bytes) =>
@@ -83,6 +103,10 @@ function wrapSessionEncoder(inner: WasmSessionEncoder): RuntimeSessionEncoder {
       inner.encodeWithSchemaTransportJson(schemaJson, valueJson),
     encodeBatchTransportJson: (valuesJson) =>
       inner.encodeBatchTransportJson(valuesJson),
+    encodeBoundStreamTransportJson: (schemaJson, valuesJson) =>
+      inner.encodeBoundStreamTransportJson(schemaJson, valuesJson),
+    encodeBatchWithSchemaTransportJson: (schemaJson, valuesJson) =>
+      inner.encodeBatchWithSchemaTransportJson(schemaJson, valuesJson),
     encodePatchTransportJson: (valueJson) =>
       inner.encodePatchTransportJson(valueJson),
     encodeMicroBatchTransportJson: (valuesJson) =>

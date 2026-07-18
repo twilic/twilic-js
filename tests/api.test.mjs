@@ -14,6 +14,8 @@ import { fromTransportValue } from "../dist/transport.js";
 import {
   createSessionEncoder as createAdvancedSessionEncoder,
   encodeBatch,
+  encodeBatchWithSchema,
+  encodeBoundStream,
   encodeWithSchema,
 } from "../dist/advanced.js";
 
@@ -160,6 +162,27 @@ test("supports schema and batch APIs through the advanced entrypoint", async () 
   assert.ok(batchBytes.length > 0);
 });
 
+test("supports v3 schema batch and bound stream APIs", async () => {
+  const schema = {
+    schemaId: 7,
+    name: "User",
+    fields: [
+      { number: 1, name: "id", logicalType: "u64", required: true },
+      { number: 2, name: "name", logicalType: "string", required: false },
+    ],
+  };
+  const values = [
+    { id: 1n, name: "alice" },
+    { id: 2n, name: "bob" },
+  ];
+
+  const boundStream = encodeBoundStream(schema, values);
+  assert.equal(boundStream[0], 0x0f);
+
+  const schemaBatch = encodeBatchWithSchema(schema, values);
+  assert.equal(schemaBatch[0], 0x0e);
+});
+
 test("supports session encoder APIs", async () => {
   const session = createSessionEncoder({
     unknownReferencePolicy: "statelessRetry",
@@ -193,6 +216,28 @@ test("supports advanced session encoder APIs", async () => {
 
   assert.ok(first.length > 0);
   assert.ok(patch.length > 0);
+});
+
+test("supports v3 session encoder APIs", async () => {
+  const session = createSessionEncoder();
+  const schema = {
+    schemaId: 8,
+    name: "User",
+    fields: [
+      { number: 1, name: "id", logicalType: "u64", required: true },
+      { number: 2, name: "name", logicalType: "string", required: false },
+    ],
+  };
+  const values = [
+    { id: 1n, name: "alice" },
+    { id: 2n, name: "bob" },
+  ];
+
+  const boundStream = session.encodeBoundStream(schema, values);
+  assert.equal(boundStream[0], 0x0f);
+
+  const schemaBatch = session.encodeBatchWithSchema(schema, values);
+  assert.equal(schemaBatch[0], 0x0e);
 });
 
 function buildDeepNestedV2Array(depth) {

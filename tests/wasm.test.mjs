@@ -61,6 +61,42 @@ test("encodes batch transport JSON", async () => {
   assert.ok(bytes instanceof Uint8Array && bytes.length > 0);
 });
 
+test("encodes v3 bound stream and schema batch transport JSON", async () => {
+  const schema = JSON.stringify({
+    schemaId: 7,
+    name: "User",
+    fields: [
+      { number: 1, name: "id", logicalType: "u64", required: true },
+      { number: 2, name: "name", logicalType: "string", required: false },
+    ],
+  });
+  const values = JSON.stringify([
+    {
+      t: "map",
+      v: [
+        ["id", { t: "u64", v: "1" }],
+        ["name", { t: "string", v: "alice" }],
+      ],
+    },
+    {
+      t: "map",
+      v: [
+        ["id", { t: "u64", v: "2" }],
+        ["name", { t: "string", v: "bob" }],
+      ],
+    },
+  ]);
+
+  const boundStream = backend.encodeBoundStreamTransportJson(schema, values);
+  assert.equal(boundStream[0], 0x0f);
+
+  const schemaBatch = backend.encodeBatchWithSchemaTransportJson(
+    schema,
+    values,
+  );
+  assert.equal(schemaBatch[0], 0x0e);
+});
+
 test("session encoder encodes and patches", async () => {
   const session = backend.createSessionEncoder();
   const first = session.encodeTransportJson(
@@ -121,4 +157,41 @@ test("session encoder compact and direct paths", async () => {
     '[8,["id",[3,"42"],"role",[5,"admin"]]]',
   );
   assert.ok(compact instanceof Uint8Array && compact.length > 0);
+});
+
+test("session encoder v3 bound stream and schema batch paths", async () => {
+  const session = backend.createSessionEncoder();
+  const schema = JSON.stringify({
+    schemaId: 8,
+    name: "User",
+    fields: [
+      { number: 1, name: "id", logicalType: "u64", required: true },
+      { number: 2, name: "name", logicalType: "string", required: false },
+    ],
+  });
+  const values = JSON.stringify([
+    {
+      t: "map",
+      v: [
+        ["id", { t: "u64", v: "1" }],
+        ["name", { t: "string", v: "alice" }],
+      ],
+    },
+    {
+      t: "map",
+      v: [
+        ["id", { t: "u64", v: "2" }],
+        ["name", { t: "string", v: "bob" }],
+      ],
+    },
+  ]);
+
+  const boundStream = session.encodeBoundStreamTransportJson(schema, values);
+  assert.equal(boundStream[0], 0x0f);
+
+  const schemaBatch = session.encodeBatchWithSchemaTransportJson(
+    schema,
+    values,
+  );
+  assert.equal(schemaBatch[0], 0x0e);
 });

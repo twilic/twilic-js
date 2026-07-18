@@ -12,6 +12,14 @@ export interface RuntimeSessionEncoder {
     valueJson: string,
   ): Uint8Array;
   encodeBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeBoundStreamTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
+  encodeBatchWithSchemaTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
   encodePatchTransportJson(valueJson: string): Uint8Array;
   encodeMicroBatchTransportJson(valuesJson: string): Uint8Array;
   encodeDirect(value: TransportValueObj): Uint8Array;
@@ -37,6 +45,14 @@ export interface RuntimeBackend {
     valueJson: string,
   ): Uint8Array;
   encodeBatchTransportJson(valuesJson: string): Uint8Array;
+  encodeBoundStreamTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
+  encodeBatchWithSchemaTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array;
   encodeDirect(value: TransportValueObj): Uint8Array;
   decodeDirect(bytes: Uint8Array): TransportValueObj;
   encodeBatchDirect(values: TransportValueObj[]): Uint8Array;

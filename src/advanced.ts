@@ -72,7 +72,7 @@ export function decode(bytes: Uint8Array): TwilicValue {
       decodeImpl = (input) => {
         const decoded = tryDecodeFast(input);
         if (decoded === undefined) {
-          throw new Error("twilic: failed to decode v2 payload");
+          throw new Error("twilic: failed to decode payload");
         }
         return decoded;
       };
@@ -103,6 +103,46 @@ export function decodeToTransportJson(bytes: Uint8Array): string {
 
 export function encodeBatchTransportJson(valuesJson: string): Uint8Array {
   return requireBackend().encodeBatchTransportJson(valuesJson);
+}
+
+export function encodeBoundStream(
+  schema: Schema,
+  values: TwilicValue[],
+): Uint8Array {
+  return requireBackend().encodeBoundStreamTransportJson(
+    serializeSchema(schema),
+    serializeValues(values),
+  );
+}
+
+export function encodeBoundStreamTransportJson(
+  schemaJson: string,
+  valuesJson: string,
+): Uint8Array {
+  return requireBackend().encodeBoundStreamTransportJson(
+    schemaJson,
+    valuesJson,
+  );
+}
+
+export function encodeBatchWithSchema(
+  schema: Schema,
+  values: TwilicValue[],
+): Uint8Array {
+  return requireBackend().encodeBatchWithSchemaTransportJson(
+    serializeSchema(schema),
+    serializeValues(values),
+  );
+}
+
+export function encodeBatchWithSchemaTransportJson(
+  schemaJson: string,
+  valuesJson: string,
+): Uint8Array {
+  return requireBackend().encodeBatchWithSchemaTransportJson(
+    schemaJson,
+    valuesJson,
+  );
 }
 
 export function encodeWithSchema(
@@ -201,6 +241,37 @@ export class AdvancedSessionEncoder {
 
   encodeBatchTransportJson(valuesJson: string): Uint8Array {
     return this.#inner.encodeBatchTransportJson(valuesJson);
+  }
+
+  encodeBoundStream(schema: Schema, values: TwilicValue[]): Uint8Array {
+    return this.#inner.encodeBoundStreamTransportJson(
+      serializeSchema(schema),
+      serializeValues(values),
+    );
+  }
+
+  encodeBoundStreamTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array {
+    return this.#inner.encodeBoundStreamTransportJson(schemaJson, valuesJson);
+  }
+
+  encodeBatchWithSchema(schema: Schema, values: TwilicValue[]): Uint8Array {
+    return this.#inner.encodeBatchWithSchemaTransportJson(
+      serializeSchema(schema),
+      serializeValues(values),
+    );
+  }
+
+  encodeBatchWithSchemaTransportJson(
+    schemaJson: string,
+    valuesJson: string,
+  ): Uint8Array {
+    return this.#inner.encodeBatchWithSchemaTransportJson(
+      schemaJson,
+      valuesJson,
+    );
   }
 
   encodePatch(value: TwilicValue): Uint8Array {
