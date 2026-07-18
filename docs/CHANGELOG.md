@@ -25,6 +25,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - CI and publish workflows: SHA-pin third-party GitHub Actions (#15).
 - `init({ wasmInput })`: narrow `wasmInput` from `unknown` to explicit `WasmInput` union (#9).
 
+## [3.1.0] - 2026-07-18
+
+### Added
+
+- Added v3 `encodeBoundStream` and `encodeBatchWithSchema` APIs for schema-bound streams and schema-aware batches.
+- Exposed v3 schema batch and bound stream entry points through `twilic-bridge`, N-API, WASM, runtime adapters, `index`, and `advanced` exports.
+- Added session encoder support for v3 bound streams and schema-aware batches.
+- Added Node and WASM regression tests that assert v3 `BOUND_STREAM` (`0x0F`) and `SCHEMA_BATCH` (`0x0E`) message kinds.
+
+### Changed
+
+- Updated the pinned `twilic-rust` reference to v3.1.0 so CI and release builds use the Rust v3 implementation.
+- Generalized fallback decode errors from v2-specific wording to payload-level wording.
+
 ## [3.0.0] - 2026-05-17
 
 ### Changed
@@ -100,7 +114,8 @@ Initial public release of the JavaScript and TypeScript bindings for Recurram.
 
 - Corrected the Rust crate path used by the workspace so native builds resolve the bridge crate correctly.
 
-[unreleased]: https://github.com/twilic/twilic-js/compare/v3.0.0...HEAD
+[unreleased]: https://github.com/twilic/twilic-js/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/twilic/twilic-js/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/twilic/twilic-js/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/twilic/twilic-js/compare/v0.1.0...v2.0.0
 [0.1.0]: https://github.com/twilic/twilic-js/releases/tag/v0.1.0
