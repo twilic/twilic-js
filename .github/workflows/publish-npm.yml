@@ -39,12 +39,14 @@ jobs:
 
       - name: Resolve twilic-rust ref
         id: twilic_rust_ref
+        shell: bash
         run: |
           ref=$(grep -v '^#' .github/twilic-rust-ref | grep -v '^[[:space:]]*$' | head -1)
           test -n "$ref"
           echo "value=$ref" >> "$GITHUB_OUTPUT"
 
       - name: Checkout twilic-rust
+        shell: bash
         run: |
           set -euo pipefail
           dest="${{ github.workspace }}/../twilic-rust"
