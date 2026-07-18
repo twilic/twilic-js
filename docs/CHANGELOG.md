@@ -6,9 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-07-18
+
 ### Added
 
+- Added v3 `encodeBoundStream` and `encodeBatchWithSchema` APIs for schema-bound streams and schema-aware batches.
+- Exposed v3 schema batch and bound stream entry points through `twilic-bridge`, N-API, WASM, runtime adapters, `index`, and `advanced` exports.
+- Added session encoder support for v3 bound streams and schema-aware batches.
+- Added Node and WASM regression tests that assert v3 `BOUND_STREAM` (`0x0F`) and `SCHEMA_BATCH` (`0x0E`) message kinds.
 - WASM backend: native compact and direct encode/decode paths via `twilic-bridge` (no transport-JSON fallback for compact APIs; direct paths use the fast transport parser) (#3).
+
+### Changed
+
+- Updated the pinned `twilic-rust` reference to v3.1.0 so CI and release builds use the Rust v3 implementation.
+- Generalized fallback decode errors from v2-specific wording to payload-level wording.
 
 ### Fixed
 
@@ -24,20 +35,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `publish-npm.yml`: route `workflow_dispatch` tag input through env vars instead of shell interpolation (#13).
 - CI and publish workflows: SHA-pin third-party GitHub Actions (#15).
 - `init({ wasmInput })`: narrow `wasmInput` from `unknown` to explicit `WasmInput` union (#9).
-
-## [3.1.0] - 2026-07-18
-
-### Added
-
-- Added v3 `encodeBoundStream` and `encodeBatchWithSchema` APIs for schema-bound streams and schema-aware batches.
-- Exposed v3 schema batch and bound stream entry points through `twilic-bridge`, N-API, WASM, runtime adapters, `index`, and `advanced` exports.
-- Added session encoder support for v3 bound streams and schema-aware batches.
-- Added Node and WASM regression tests that assert v3 `BOUND_STREAM` (`0x0F`) and `SCHEMA_BATCH` (`0x0E`) message kinds.
-
-### Changed
-
-- Updated the pinned `twilic-rust` reference to v3.1.0 so CI and release builds use the Rust v3 implementation.
-- Generalized fallback decode errors from v2-specific wording to payload-level wording.
 
 ## [3.0.0] - 2026-05-17
 
