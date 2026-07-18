@@ -3,10 +3,17 @@ import { encodeFast, tryDecodeFast } from "./fast-codec.js";
 import {
   serializeCompact,
   serializeCompactBatch,
+  serializeSchema,
   serializeSessionOptions,
+  serializeValues,
   serializeValue,
 } from "./transport.js";
-import type { InitOptions, TwilicValue, SessionOptions } from "./types.js";
+import type {
+  InitOptions,
+  TwilicValue,
+  Schema,
+  SessionOptions,
+} from "./types.js";
 import type { RuntimeKind, RuntimeSessionEncoder } from "./runtime/types.js";
 
 export type {
@@ -54,7 +61,7 @@ export function decode(bytes: Uint8Array): TwilicValue {
       decodeImpl = (input) => {
         const decoded = tryDecodeFast(input);
         if (decoded === undefined) {
-          throw new Error("twilic: failed to decode v2 payload");
+          throw new Error("twilic: failed to decode payload");
         }
         return decoded;
       };
@@ -85,6 +92,20 @@ export class SessionEncoder {
 
   encodeBatch(values: TwilicValue[]): Uint8Array {
     return this.#inner.encodeBatchCompactJson(serializeCompactBatch(values));
+  }
+
+  encodeBoundStream(schema: Schema, values: TwilicValue[]): Uint8Array {
+    return this.#inner.encodeBoundStreamTransportJson(
+      serializeSchema(schema),
+      serializeValues(values),
+    );
+  }
+
+  encodeBatchWithSchema(schema: Schema, values: TwilicValue[]): Uint8Array {
+    return this.#inner.encodeBatchWithSchemaTransportJson(
+      serializeSchema(schema),
+      serializeValues(values),
+    );
   }
 
   encodePatch(value: TwilicValue): Uint8Array {

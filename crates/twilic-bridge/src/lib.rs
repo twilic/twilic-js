@@ -6,8 +6,9 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::value::RawValue;
 use twilic::model::SchemaField;
 use twilic::{
-    create_session_encoder, decode, encode, encode_batch, encode_with_schema, Schema,
-    SessionEncoder, SessionOptions, TwilicError, UnknownReferencePolicy, Value,
+    create_session_encoder, decode, encode, encode_batch, encode_batch_with_schema,
+    encode_bound_stream, encode_with_schema, Schema, SessionEncoder, SessionOptions, TwilicError,
+    UnknownReferencePolicy, Value,
 };
 
 // ── SIMD-JSON helpers ───────────────────────────────────────────────────────
@@ -197,6 +198,24 @@ pub fn encode_batch_transport_json(values_json: String) -> Result<Vec<u8>> {
     encode_batch(&values).map_err(Into::into)
 }
 
+pub fn encode_bound_stream_transport_json(
+    schema_json: String,
+    values_json: String,
+) -> Result<Vec<u8>> {
+    let schema = parse_schema_json(schema_json)?;
+    let values = parse_transport_values_json(values_json)?;
+    encode_bound_stream(&schema, &values).map_err(Into::into)
+}
+
+pub fn encode_batch_with_schema_transport_json(
+    schema_json: String,
+    values_json: String,
+) -> Result<Vec<u8>> {
+    let schema = parse_schema_json(schema_json)?;
+    let values = parse_transport_values_json(values_json)?;
+    encode_batch_with_schema(&schema, &values).map_err(Into::into)
+}
+
 pub struct BridgeSessionEncoder {
     inner: SessionEncoder,
 }
@@ -231,13 +250,32 @@ impl BridgeSessionEncoder {
     }
 
     pub fn encode_batch_transport_json(&mut self, values_json: String) -> Result<Vec<u8>> {
-        let mut bytes = values_json.into_bytes();
-        let transports: Vec<TransportValue> = simd_from_mut_slice(&mut bytes)?;
-        let values: Vec<Value> = transports
-            .into_iter()
-            .map(transport_to_value)
-            .collect::<Result<Vec<_>>>()?;
+        let values = parse_transport_values_json(values_json)?;
         self.inner.encode_batch(&values).map_err(Into::into)
+    }
+
+    pub fn encode_bound_stream_transport_json(
+        &mut self,
+        schema_json: String,
+        values_json: String,
+    ) -> Result<Vec<u8>> {
+        let schema = parse_schema_json(schema_json)?;
+        let values = parse_transport_values_json(values_json)?;
+        self.inner
+            .encode_bound_stream(&schema, &values)
+            .map_err(Into::into)
+    }
+
+    pub fn encode_batch_with_schema_transport_json(
+        &mut self,
+        schema_json: String,
+        values_json: String,
+    ) -> Result<Vec<u8>> {
+        let schema = parse_schema_json(schema_json)?;
+        let values = parse_transport_values_json(values_json)?;
+        self.inner
+            .encode_batch_with_schema(&schema, &values)
+            .map_err(Into::into)
     }
 
     pub fn encode_patch_transport_json(&mut self, value_json: String) -> Result<Vec<u8>> {
@@ -266,6 +304,15 @@ fn parse_schema_json(schema_json: String) -> Result<Schema> {
     let mut bytes = schema_json.into_bytes();
     let schema: TransportSchema = simd_from_mut_slice(&mut bytes)?;
     transport_schema_to_schema(schema)
+}
+
+fn parse_transport_values_json(values_json: String) -> Result<Vec<Value>> {
+    let mut bytes = values_json.into_bytes();
+    let transports: Vec<TransportValue> = simd_from_mut_slice(&mut bytes)?;
+    transports
+        .into_iter()
+        .map(transport_to_value)
+        .collect::<Result<Vec<_>>>()
 }
 
 fn parse_session_options_json(options_json: Option<&str>) -> Result<SessionOptions> {

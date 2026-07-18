@@ -9,6 +9,7 @@ use napi_derive::napi;
 use twilic_bridge::{
     decode_direct, decode_to_compact_json, decode_to_transport_json, encode_batch_compact_json,
     encode_batch_direct_from_json, encode_batch_native_raw, encode_batch_transport_json,
+    encode_batch_with_schema_transport_json, encode_bound_stream_transport_json,
     encode_compact_json, encode_direct_from_json, encode_transport_json,
     encode_with_schema_transport_json, BridgeError, BridgeSessionEncoder, TransportValue,
 };
@@ -1551,6 +1552,26 @@ pub fn encode_batch_transport_json_napi(values_json: String) -> napi::Result<Buf
         .map_err(to_napi_error)
 }
 
+#[napi(js_name = "encodeBoundStreamTransportJson")]
+pub fn encode_bound_stream_transport_json_napi(
+    schema_json: String,
+    values_json: String,
+) -> napi::Result<Buffer> {
+    encode_bound_stream_transport_json(schema_json, values_json)
+        .map(Buffer::from)
+        .map_err(to_napi_error)
+}
+
+#[napi(js_name = "encodeBatchWithSchemaTransportJson")]
+pub fn encode_batch_with_schema_transport_json_napi(
+    schema_json: String,
+    values_json: String,
+) -> napi::Result<Buffer> {
+    encode_batch_with_schema_transport_json(schema_json, values_json)
+        .map(Buffer::from)
+        .map_err(to_napi_error)
+}
+
 // ── Direct serde API (JS object → serde_json::Value → fast parse → encode) ─
 
 #[napi(js_name = "encodeDirect")]
@@ -1729,6 +1750,30 @@ impl SessionEncoder {
     pub fn encode_batch_transport_json(&mut self, values_json: String) -> napi::Result<Buffer> {
         self.inner
             .encode_batch_transport_json(values_json)
+            .map(Buffer::from)
+            .map_err(to_napi_error)
+    }
+
+    #[napi(js_name = "encodeBoundStreamTransportJson")]
+    pub fn encode_bound_stream_transport_json(
+        &mut self,
+        schema_json: String,
+        values_json: String,
+    ) -> napi::Result<Buffer> {
+        self.inner
+            .encode_bound_stream_transport_json(schema_json, values_json)
+            .map(Buffer::from)
+            .map_err(to_napi_error)
+    }
+
+    #[napi(js_name = "encodeBatchWithSchemaTransportJson")]
+    pub fn encode_batch_with_schema_transport_json(
+        &mut self,
+        schema_json: String,
+        values_json: String,
+    ) -> napi::Result<Buffer> {
+        self.inner
+            .encode_batch_with_schema_transport_json(schema_json, values_json)
             .map(Buffer::from)
             .map_err(to_napi_error)
     }
