@@ -215,4 +215,4 @@ jobs:
         run: npm install -g "npm@^11.5.1"
 
       - name: Publish to npm
-        run: npm publish release/*.tgz --access public --provenance
+        run: npm publish ./release/*.tgz --access public --provenance
