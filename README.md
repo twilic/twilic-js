@@ -7,7 +7,7 @@ JavaScript/TypeScript bindings for `twilic-rust` with two backends:
 
 Integers decode as `bigint` by default (i64/u64 safe handling).
 
-This release line targets the Twilic v2 wire format.
+This release line targets the Twilic v3 wire format (Dynamic Profile by default).
 
 ## Requirements
 
@@ -94,6 +94,7 @@ This entrypoint contains:
 - compact JSON helpers
 - direct object helpers
 - schema encoding helpers
+- v3 `encodeBoundStream` / `encodeBatchWithSchema`
 - full raw session encoder methods
 
 ## Usage (Browser)
